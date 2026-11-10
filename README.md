@@ -1,21 +1,31 @@
-# Sovereign Open Initiative
+# Sovereign OS — Sovereign Open Initiative
 
 > **Open technology. Accessible knowledge. Community development.**
 
-Sovereign Open Initiative is a free and open-source public-benefit project bringing together experiments in financial education, document workflows, deterministic ledger reconciliation, and compliance-support tooling.
+Sovereign OS is a modular Streamlit workspace for synthetic-data accounting
+demonstrations, tax-learning workpapers, professional learning and career planning,
+plus optional AI and GitHub integrations.
 
 **Release:** `v0.1-preview`  
 **Founder attribution:** Deva Anil Kanth  
 **License:** Apache License 2.0
 
-## What v0.1 actually provides
+## What this preview provides
 
-- A Streamlit demonstration for CSV ledger arithmetic reconciliation.
-- A deterministic four-state result: `PASS`, `FAIL`, `NOT TESTED`, or `INPUT ERROR`.
-- Synthetic sample data and a small automated test suite.
-- Documentation describing the seven related repositories and their current limitations.
+- A dashboard with local health indicators, module status, recent session activity,
+  and quick navigation.
+- CSV and XLSX ledger import, duplicate-header checks, deterministic Decimal
+  reconciliation, transaction previews, and CSV/JSON result downloads.
+- US and Canadian tax-year-labeled educational workpapers that only total user-entered
+  values and link to official source starting points.
+- Original VITA/TCE, EA, CPA, US-tax, and Canada-tax learning prompts; quiz and
+  session-only progress tracking.
+- Session-only resume inventory, career skills, application tracking, and planning.
+- An opt-in OpenAI-compatible assistant and read-only GitHub Actions run status.
 
-This release does **not** provide tax-return preparation, IRS/CRA-approved calculations, certified compliance, OCR/PDF extraction, legal advice, audit assurance, or production-grade client-data processing.
+This preview does **not** prepare or file tax returns, apply official tax-year rules,
+provide tax/legal advice, certify compliance, extract PDF/OCR data, or validate the
+truth and completeness of source documents.
 
 ## Public-benefit principles
 
@@ -26,31 +36,90 @@ This release does **not** provide tax-return preparation, IRS/CRA-approved calcu
 5. **Human responsibility:** a reconciliation result only tests arithmetic against supplied values. It does not establish that source records are complete, genuine, correctly classified, or tax-compliant.
 6. **Evidence-led claims:** accuracy, performance, security, and compliance claims must be supported by reproducible evidence.
 
-## Quickstart
+## Installation and configuration
 
 ```bash
 git clone https://github.com/anilkanth98488-beep/sovereign-open-initiative.git
 cd sovereign-open-initiative
+```
+
+Use Python 3.10 or later. Create and activate a virtual environment:
+
+```bash
 python -m venv .venv
-# macOS/Linux:
+# macOS/Linux
 source .venv/bin/activate
-# Windows PowerShell:
-# .venv\Scripts\Activate.ps1
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+```
+
+Install the application and test dependencies (Excel import uses `openpyxl`):
+
+```bash
 python -m pip install -r requirements.txt
+```
+
+Copy `.env.example` to `.env` only if you want to configure optional integrations.
+The application does not automatically load `.env`; export values in the shell or
+configure deployment environment variables/Streamlit secrets. Never commit a real
+API key or token. Available settings:
+
+- `SOVEREIGN_GITHUB_REPOSITORY` — GitHub repository used as the default status target.
+- `GITHUB_TOKEN` — optional GitHub API token, configured server-side.
+- `SOVEREIGN_AI_API_KEY` — optional OpenAI-compatible provider key.
+- `SOVEREIGN_AI_BASE_URL` and `SOVEREIGN_AI_MODEL` — optional provider endpoint/model.
+
+The AI assistant sends a prompt to the selected external provider only after the user
+submits it and confirms the disclosure. Provider fees, retention, and terms may apply.
+Do not submit confidential information.
+
+## Run the application
+
+Start the Sovereign OS workspace from the repository root:
+
+```bash
 streamlit run app.py
 ```
 
-Run tests:
+Sidebar navigation opens Dashboard, Accounting, US & Canadian Tax, Learning & VITA,
+Career, AI Assistant, and Automation. Accounting accepts CSV or first-sheet XLSX with
+`Date` and `Amount` columns; positive amounts are credits and negative amounts are
+debits. The bundled synthetic ledger reconciles from `1000.00` to `1450.00`.
+
+Tax workpapers require explicit tax-year selection and do not infer rates or rules.
+Career uploads and module progress are held in Streamlit session memory, not persisted
+to a database. GitHub API reads and AI requests are optional external integrations.
+
+Run the test suite:
 
 ```bash
-python -m pytest -q
+python -m pytest -v
 ```
 
-Try `sample_data/synthetic_ledger.csv`. Its opening balance is `1000.00` and expected closing balance is `1450.00`.
+GitHub Actions runs the test suite on pushes and pull requests. The workspace is a
+demonstration; use synthetic data only and never upload taxpayer, client, banking, or
+other confidential records.
 
 ## Deployment
 
-The app entry point is `app.py`. It can be evaluated on Streamlit Community Cloud or a compatible Posit Connect deployment, subject to the host's current account, plan, resource, and data-handling terms. Hosting is not guaranteed to be permanently free. Configure no secrets for this v0.1 demo; never add secrets to source code or commit `.env` files.
+The app entry point is `app.py`. It can be evaluated on Streamlit Community Cloud or
+a compatible deployment, subject to the host's current account, plan, resource, and
+data-handling terms. Hosting is not guaranteed to be permanently free. Review
+[`PRIVACY.md`](PRIVACY.md) before enabling external integrations.
+
+## Module layout
+
+```text
+app.py
+core/                     Shared reconciliation and configuration
+modules/accounting/       CSV/XLSX ledger import and reconciliation reports
+modules/us_tax/           US tax workpaper catalog and source links
+modules/canada_tax/       Canadian tax workpaper catalog and source links
+modules/learning/         Learning tracks, practice, and progress
+modules/career/           Resume, skills, application, and career tools
+modules/assistant/        Optional OpenAI-compatible AI integration
+modules/automation/       Read-only GitHub Actions integration
+tests/                    Unit and application tests
+```
 
 ## Repository map
 

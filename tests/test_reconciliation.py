@@ -37,6 +37,11 @@ def test_non_finite_amount_rejected():
     assert Sovereign167VReconciler(df, "0", "0").execute_reconciliation()["status"] == "INPUT ERROR"
 
 
+def test_extreme_decimal_exponent_rejected_without_formatting_huge_value():
+    df = ledger([("2026-11-01", "1e1000000")])
+    assert Sovereign167VReconciler(df, "0", "0").execute_reconciliation()["status"] == "INPUT ERROR"
+
+
 def test_invalid_date_rejected():
     df = ledger([("not-a-date", "10.00")])
     assert Sovereign167VReconciler(df, "0", "10").execute_reconciliation()["status"] == "INPUT ERROR"
@@ -45,6 +50,16 @@ def test_invalid_date_rejected():
 def test_missing_column_rejected():
     df = pd.DataFrame({"Date": ["2026-11-01"], "Debit": ["10.00"]})
     assert Sovereign167VReconciler(df, "0", "10").execute_reconciliation()["status"] == "INPUT ERROR"
+
+
+def test_duplicate_columns_rejected():
+    df = pd.DataFrame(
+        [["2026-11-01", "2026-11-02", "10.00"]],
+        columns=["Date", "Date", "Amount"],
+    )
+    result = Sovereign167VReconciler(df, "0", "10").execute_reconciliation()
+    assert result["status"] == "INPUT ERROR"
+    assert result["details"] == "Duplicate column name(s): Date."
 
 
 def test_negative_tolerance_rejected():

@@ -1,55 +1,62 @@
-import pandas as pd
+from __future__ import annotations
+
 import streamlit as st
 
-from core.reconciliation import Sovereign167VReconciler
+from modules.accounting.page import render as render_accounting
+from modules.assistant.page import render as render_assistant
+from modules.automation.page import render as render_automation
+from modules.career.page import render as render_career
+from modules.dashboard import render as render_dashboard
+from modules.learning.page import render as render_learning
+from modules.tax_center import render as render_tax_center
+
+NAVIGATION = (
+    "Dashboard",
+    "Accounting",
+    "US & Canadian Tax",
+    "Learning & VITA",
+    "Career",
+    "AI Assistant",
+    "Automation",
+)
 
 st.set_page_config(
-    page_title="Sovereign Open Initiative | Public Preview",
+    page_title="Sovereign OS | Professional Workspace",
     page_icon="🦅",
     layout="wide",
+    initial_sidebar_state="expanded",
+)
+st.markdown(
+    """
+    <style>
+    .block-container { padding-top: 1.8rem; }
+    [data-testid="stSidebar"] { border-right: 1px solid rgba(128, 128, 128, .18); }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
-st.title("🦅 Sovereign Open Initiative")
-st.caption("Public Preview v0.1 — Open technology. Accessible knowledge. Community development.")
+st.session_state.setdefault("recent_activities", [])
+st.session_state.setdefault("workspace_navigation", "Dashboard")
+with st.sidebar:
+    st.title("🦅 Sovereign OS")
+    st.caption("Professional workspace · Preview")
+    st.radio("Workspace", NAVIGATION, key="workspace_navigation")
+    st.divider()
+    st.caption("Use synthetic data only. AI and external integrations are opt-in.")
 
-st.warning(
-    "Demonstration only. Use synthetic data. Do not upload real taxpayer, client, bank, "
-    "payroll, identity, or confidential information. A PASS result is an arithmetic check, "
-    "not an audit opinion, tax validation, or guarantee of source accuracy."
-)
-
-st.subheader("167V arithmetic ledger reconciliation")
-st.write("Upload a CSV containing `Date` and `Amount` columns. Positive amounts are credits; negative amounts are debits.")
-
-with st.expander("Control balances", expanded=True):
-    col1, col2, col3 = st.columns(3)
-    opening = col1.text_input("Opening balance", value="1000.00")
-    expected = col2.text_input("Expected closing balance", value="1450.00")
-    tolerance = col3.text_input("Tolerance", value="0.01")
-
-uploaded = st.file_uploader("Choose a synthetic CSV ledger", type=["csv"])
-
-if uploaded is not None:
-    try:
-        ledger = pd.read_csv(uploaded)
-        st.subheader("Uploaded ledger preview")
-        st.dataframe(ledger, use_container_width=True)
-        if st.button("Run arithmetic reconciliation", type="primary"):
-            result = Sovereign167VReconciler(
-                ledger,
-                opening_balance=opening,
-                expected_closing_balance=expected,
-                tolerance=tolerance,
-            ).execute_reconciliation()
-            status = result["status"]
-            if status == "PASS":
-                st.success(f"{status}: {result['details']}")
-            elif status == "NOT TESTED":
-                st.warning(f"{status}: {result['details']}")
-            else:
-                st.error(f"{status}: {result['details']}")
-            st.json(result)
-    except (pd.errors.ParserError, UnicodeDecodeError, ValueError) as exc:
-        st.error(f"Could not read this CSV: {exc}")
-else:
-    st.info("Try `sample_data/synthetic_ledger.csv` to test the demonstration.")
+page = st.session_state["workspace_navigation"]
+if page == "Dashboard":
+    render_dashboard()
+elif page == "Accounting":
+    render_accounting()
+elif page == "US & Canadian Tax":
+    render_tax_center()
+elif page == "Learning & VITA":
+    render_learning()
+elif page == "Career":
+    render_career()
+elif page == "AI Assistant":
+    render_assistant()
+elif page == "Automation":
+    render_automation()

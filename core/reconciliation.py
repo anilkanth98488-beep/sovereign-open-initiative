@@ -42,11 +42,17 @@ class Sovereign167VReconciler:
             text = str(value).strip()
             if not text:
                 return None
+            if len(text) > 128:
+                return "INVALID"
             text = text.replace("$", "").replace(",", "")
             if text.startswith("(") and text.endswith(")"):
                 text = "-" + text[1:-1]
             number = Decimal(text)
-            if not number.is_finite():
+            if (
+                not number.is_finite()
+                or number.adjusted() > 30
+                or number.as_tuple().exponent < -18
+            ):
                 return "INVALID"
             return number
         except (InvalidOperation, ValueError, TypeError):
@@ -67,6 +73,13 @@ class Sovereign167VReconciler:
         return result
 
     def execute_reconciliation(self) -> dict:
+        duplicate_columns = self.raw_df.columns[self.raw_df.columns.duplicated()].unique()
+        if len(duplicate_columns):
+            return self._build_result(
+                "INPUT ERROR",
+                f"Duplicate column name(s): {', '.join(map(str, duplicate_columns))}.",
+            )
+
         missing = [col for col in self.REQUIRED_COLUMNS if col not in self.raw_df.columns]
         if missing:
             return self._build_result(

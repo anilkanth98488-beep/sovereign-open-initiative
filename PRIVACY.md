@@ -2,13 +2,26 @@
 
 ## Scope of this preview
 
-The v0.1 public demo processes a CSV ledger uploaded by the visitor to the Streamlit application. Hosting providers may process application traffic and uploaded files according to their own terms and technical configuration. This project does not promise that uploaded data stays on the visitor's device or that hosting is zero-retention.
+The workspace can process CSV/XLSX ledgers and session-only resume uploads through
+the Streamlit application. Hosting providers may process application traffic and
+uploaded files according to their own terms and technical configuration. This
+project does not promise that uploaded data stays on the visitor's device or that
+hosting is zero-retention.
 
 **Use synthetic data only. Do not upload real taxpayer, client, bank, payroll, identity, or confidential information.**
 
-## No active AI integration in v0.1
+## Optional AI integration
 
-This release does not implement an AI provider connection or BYOK prompt routing. Any future AI feature must have a separate, accurate disclosure explaining what information is transmitted, to whom, for what purpose, and under what retention terms. A user's API key must be handled server-side and must never be embedded in browser code or committed to source control.
+The optional AI Assistant sends the submitted prompt to the configured
+OpenAI-compatible provider after an explicit submit action and confirmation. Provider
+terms, processing, retention, location, and fees are controlled by that provider.
+Configure credentials server-side with environment variables or Streamlit secrets.
+The application does not write API keys to source files or log their values. Do not
+send confidential, identifying, taxpayer, banking, or client information.
+
+GitHub Actions status lookups make a read-only request to the GitHub API when manually
+requested. Session-only career files remain in application session memory while the
+session is active; a hosted Streamlit server receives uploaded bytes.
 
 ## Practitioner responsibilities
 
