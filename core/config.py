@@ -33,7 +33,7 @@ class Settings:
                 "anilkanth98488-beep/sovereign-open-initiative",
             ),
             github_token=value("GITHUB_TOKEN") or None,
-            ai_api_key=value("AI_API_KEY") or None,
+            ai_api_key=value("SOVEREIGN_AI_API_KEY") or None,
             ai_base_url=value("SOVEREIGN_AI_BASE_URL", "https://api.openai.com/v1"),
             ai_model=value("SOVEREIGN_AI_MODEL", "gpt-4o-mini"),
         )
