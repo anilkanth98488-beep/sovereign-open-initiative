@@ -1,7 +1,229 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sovereign TaxFlow | Ledger review desk</title>
 <style>
-*{box-sizing:border-box}body{margin:auto;max-width:980px;padding:0 5vw 45px;background:#f8f7f1;color:#19352f;font:17px/1.55 "Source Sans 3",system-ui,sans-serif}header,footer{padding:18px 0;border-bottom:1px solid #bbc7be;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}header strong{font: bold 21px Georgia,serif}a{color:#145449;text-underline-offset:4px}h1,h2{font-family:"Source Serif 4",Georgia,serif;line-height:1.12}h1{font-size:clamp(44px,7vw,76px);letter-spacing:-.04em;margin:44px 0 12px;max-width:720px}h2{font-size:29px;margin:0 0 16px}p{max-width:670px}section{margin:30px 0}.desk{background:white;border:1px solid #c5cec6;padding:clamp(16px,4vw,35px);border-radius:8px}.rows{margin:0 0 18px;padding:0}.rows div{display:flex;justify-content:space-between;border-bottom:1px solid #d8ded8;padding:5px 0;gap:10px}.rows dd{margin:0;font-variant-numeric:tabular-nums}fieldset{border:0;margin:0;padding:0}legend{font-weight:bold;margin:8px 0}label{display:inline-block;padding:9px;cursor:pointer}input{accent-color:#145449}article{display:none;padding:16px;border-left:4px solid #216a54;background:#eff6ef;margin-top:10px}article.fail{background:#fff1e3;border-color:#ae530d}#tie:checked~.pass,#gap:checked~.fail{display:block}article p{margin:6px 0 12px}.button{display:inline-block;background:#155545;color:white;border-radius:4px;padding:10px 14px;text-decoration:none}footer{font-size:14px}summary{cursor:pointer}code{overflow-wrap:anywhere;font-size:13px} :focus-visible{outline:3px solid #966200;outline-offset:2px}</style>
+*{box-sizing:border-box}body{margin:auto;max-width:980px;padding:0 5vw 45px;background:#f8f7f1;color:#19352f;font:17px/1.55 "Source Sans 3",system-ui,sans-serif}header,footer{padding:18px 0;border-bottom:1px solid #bbc7be;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}header strong{font: bold 21px Georgia,serif}a{color:#145449;text-underline-offset:4px}h1,h2{font-family:"Source Serif 4",Georgia,serif;line-height:1.12}h1{font-size:clamp(44px,7vw,76px);letter-spacing:-.04em;margin:44px 0 12px;max-width:720px}h2{font-size:29px;margin:0 0 16px}p{max-width:670px}section{margin:30px 0}.desk{background:white;border:1px solid #c5cec6;padding:clamp(16px,4vw,35px);border-radius:8px}.rows{margin:0 0 18px;padding:0}.rows div{display:flex;justify-content:space-between;border-bottom:1px solid #d8ded8;padding:5px 0;gap:10px}.rows dd{margin:0;font-variant-numeric:tabular-nums}fieldset{border:0;margin:0;padding:0}legend{font-weight:bold;margin:8px 0}label{display:inline-block;padding:9px;cursor:pointer}input{accent-color:#145449}article{display:none;padding:16px;border-left:4px solid #216a54;background:#eff6ef;margin-top:10px}article.fail{background:#fff1e3;border-color:#ae530d}#tie:checked~.pass,#gap:checked~.fail{display:block}article p{margin:6px 0 12px}.button{display:inline-block;background:#155545;color:white;border-radius:4px;padding:10px 14px;text-decoration:none}footer{font-size:14px}summary{cursor:pointer}code{overflow-wrap:anywhere;font-size:13px} :focus-visible{outline:3px solid #966200;outline-offset:2px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start;gap:12px}.case,.group{background:white;border:1px solid #c5cec6;border-radius:8px;padding:16px}.case summary small,.case summary strong,.case summary span{display:block}.case small{color:#37695e}.case summary strong{font: bold 22px Georgia,serif;margin:5px 0}.case summary span,.group dd{font-size:15px}.case pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 monospace;background:#f2f5ef;padding:12px;max-height:25rem;overflow:auto}.group{margin:8px 0}.group summary{font-weight:bold}.group dt{font-weight:bold;margin-top:12px}.group dd{margin-left:0}.links{display:flex;flex-wrap:wrap;gap:8px 20px}.case summary::marker{color:#21765f}</style>
 <header><strong>Sovereign TaxFlow</strong><a href="#pilot">Fixed-fee pilot ↓</a></header>
-<main><h1>Can the reviewer trace the closing balance?</h1><p>Follow two ledger entries into an Excel workpaper. Choose a control balance to see what the reviewer can sign off and what still needs evidence.</p>
-<section class="desk"><h2>Try the synthetic ledger</h2><dl class="rows"><div><dt>Opening balance</dt><dd>$1,000.00</dd></div><div><dt>Jan 1 · Credit</dt><dd>+$300.00</dd></div><div><dt>Jan 2 · Debit</dt><dd>−$50.00</dd></div><div><dt><strong>Calculated closing</strong></dt><dd><strong>$1,250.00</strong></dd></div></dl>
-<fieldset><legend>Choose the expected closing balance</legend><input id="tie" type="radio" name="control" checked><label for="tie">$1,250.00</label> <input id="gap" type="radio" name="control"><label for="gap">$1,251.00</label><article class="pass"><strong>PASS · The balances tie.</strong><p>Calculated minus expected: 0.00 USD. Tolerance: 0.01 USD.</p><a class="button" download="TaxFlow-synthetic-pass.xlsx" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,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">Download sample workpaper (.xlsx)</a><details><summary>Trace this Python result</summary><p>Input fingerprint<br><code>b5ed6e2549888f1b5bc6a10ff131911f3d2e071f755eb0f656738730a3f7444d</code></p><p>Parameter fingerprint<br><code>66be7b2f28c36c3ddb576abb55fddf9d8926067fd138c37b79dc122161b4dfc4</code></p><p>Rule: <code>Sovereign167VReconciler-v2.15-workpaper</code><br>Reviewer sign-off: pending</p></details></article><article class="fail"><strong>FAIL · The ledger is $1.00 short.</strong><p>Calculated minus expected: -1.00 USD. Tolerance: 0.01 USD.</p><p>Reviewer question: Which source entry or control record explains the difference? Keep the exception open until evidence supports a correction.</p><details><summary>Trace this Python result</summary><p>Input fingerprint<br><code>b5ed6e2549888f1b5bc6a10ff131911f3d2e071f755eb0f656738730a3f7444d</code></p><p>Parameter fingerprint<br><code>46cd821f5e5b9067c11d9ff26a842649f42efe9e500f758951cab6a92b35edb3</code></p><p>Rule: <code>Sovereign167VReconciler-v2.15-workpaper</code><br>Reviewer sign-off: pending</p></details></article></fieldset></section><section id="pilot"><h2>One ledger. One reviewer walkthrough.</h2><p>Deva Anil Kanth prepares one Excel tie-out and one exception list in your firm’s preferred format. Start with a blank layout or invented records. Agree on the scope, fee and acceptance criteria before the pilot.</p><a href="https://github.com/anilkanth98488-beep/sovereign-open-initiative/issues/new?title=Synthetic%20workpaper%20walkthrough&amp;body=I%20would%20like%20a%20three-minute%20synthetic%20demo.">Request a synthetic walkthrough on GitHub ↗</a><p><small>GitHub requests are public. Keep names of clients, contact details and financial records out of the request. If Deva emailed you this demo, you can reply privately to that email.</small></p></section></main><footer><span>Two saved Python results · Synthetic data · CPA review pending</span><a href="https://github.com/anilkanth98488-beep/sovereign-open-initiative/tree/Core">Public project ↗</a></footer></html>
+<main><h1>Tax workpapers for reviewers</h1><nav class="links" aria-label="Workpapers"><a href="#ledger">Try the ledger</a><a href="#examples">Sample workpapers</a><a href="#catalog">Workpaper directory</a><a href="#pilot">Pilot offer</a></nav><p>Follow two ledger entries into an Excel workpaper. Choose a control balance to see what the reviewer can sign off and what still needs evidence.</p>
+<section class="desk" id="ledger"><h2>Try the synthetic ledger</h2><dl class="rows"><div><dt>Opening balance</dt><dd>$1,000.00</dd></div><div><dt>Jan 1 · Credit</dt><dd>+$300.00</dd></div><div><dt>Jan 2 · Debit</dt><dd>−$50.00</dd></div><div><dt><strong>Calculated closing</strong></dt><dd><strong>$1,250.00</strong></dd></div></dl>
+<fieldset><legend>Choose the expected closing balance</legend><input id="tie" type="radio" name="control" checked><label for="tie">$1,250.00</label> <input id="gap" type="radio" name="control"><label for="gap">$1,251.00</label><article class="pass"><strong>PASS · The balances tie.</strong><p>Calculated minus expected: 0.00 USD. Tolerance: 0.01 USD.</p><a class="button" download="TaxFlow-synthetic-pass.xlsx" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,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">Download sample workpaper (.xlsx)</a><details><summary>Trace this Python result</summary><p>Input fingerprint<br><code>b5ed6e2549888f1b5bc6a10ff131911f3d2e071f755eb0f656738730a3f7444d</code></p><p>Parameter fingerprint<br><code>66be7b2f28c36c3ddb576abb55fddf9d8926067fd138c37b79dc122161b4dfc4</code></p><p>Rule: <code>Sovereign167VReconciler-v2.15-workpaper</code><br>Reviewer sign-off: pending</p></details></article><article class="fail"><strong>FAIL · The ledger is $1.00 short.</strong><p>Calculated minus expected: -1.00 USD. Tolerance: 0.01 USD.</p><p>Reviewer question: Which source entry or control record explains the difference? Keep the exception open until evidence supports a correction.</p><details><summary>Trace this Python result</summary><p>Input fingerprint<br><code>b5ed6e2549888f1b5bc6a10ff131911f3d2e071f755eb0f656738730a3f7444d</code></p><p>Parameter fingerprint<br><code>46cd821f5e5b9067c11d9ff26a842649f42efe9e500f758951cab6a92b35edb3</code></p><p>Rule: <code>Sovereign167VReconciler-v2.15-workpaper</code><br>Reviewer sign-off: pending</p></details></article></fieldset></section><section id="examples"><h2>Explore sample workpapers</h2><p>Open a case to inspect its saved Python output. Every record here is synthetic. Review and sign-off remain with the firm.</p><div class="cards"><details class="case"><summary><small>2025 · Form 1040</small><strong>W-2 wages &amp; withholding</strong><span>Two W-2s show $5,700 withheld. The draft return shows $5,500.</span></summary><pre tabindex="0">{
+  &quot;year&quot;: 2025,
+  &quot;authority&quot;: &quot;https://www.irs.gov/pub/irs-prior/f1040--2025.pdf&quot;,
+  &quot;reviewer_approval&quot;: &quot;PENDING&quot;,
+  &quot;expected_documents&quot;: [
+    &quot;W2-A&quot;,
+    &quot;W2-B&quot;
+  ],
+  &quot;missing_documents&quot;: [],
+  &quot;unexpected_documents&quot;: [],
+  &quot;evidence&quot;: [
+    {
+      &quot;reference&quot;: &quot;W2-A&quot;,
+      &quot;box1&quot;: &quot;45000.00&quot;,
+      &quot;box2&quot;: &quot;4500.00&quot;
+    },
+    {
+      &quot;reference&quot;: &quot;W2-B&quot;,
+      &quot;box1&quot;: &quot;15000.00&quot;,
+      &quot;box2&quot;: &quot;1200.00&quot;
+    }
+  ],
+  &quot;checks&quot;: [
+    {
+      &quot;line&quot;: &quot;1a&quot;,
+      &quot;box&quot;: &quot;box1&quot;,
+      &quot;blank_on&quot;: [],
+      &quot;source_total_usd&quot;: &quot;60000.00&quot;,
+      &quot;draft_usd&quot;: &quot;60000.00&quot;,
+      &quot;source_minus_draft_usd&quot;: &quot;0.00&quot;,
+      &quot;status&quot;: &quot;MATCH&quot;
+    },
+    {
+      &quot;line&quot;: &quot;25a&quot;,
+      &quot;box&quot;: &quot;box2&quot;,
+      &quot;blank_on&quot;: [],
+      &quot;source_total_usd&quot;: &quot;5700.00&quot;,
+      &quot;draft_usd&quot;: &quot;5500.00&quot;,
+      &quot;source_minus_draft_usd&quot;: &quot;200.00&quot;,
+      &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;
+    }
+  ]
+}</pre></details><details class="case"><summary><small>Offline drafting</small><strong>Reviewer follow-up</strong><span>Read the question generated from the same $200 difference.</span></summary><pre tabindex="0">{
+  &quot;status&quot;: &quot;DRAFT_READY&quot;,
+  &quot;schema&quot;: &quot;w2_tieout&quot;,
+  &quot;tax_year&quot;: 2025,
+  &quot;draft_only&quot;: true,
+  &quot;approval_granted&quot;: false,
+  &quot;note_count&quot;: 1,
+  &quot;notes&quot;: [
+    {
+      &quot;note_type&quot;: &quot;DISCREPANCY&quot;,
+      &quot;rule_id&quot;: &quot;1040_w2_tieout&quot;,
+      &quot;tax_year&quot;: 2025,
+      &quot;line&quot;: &quot;25a&quot;,
+      &quot;source_references&quot;: [
+        &quot;W2-A&quot;,
+        &quot;W2-B&quot;
+      ],
+      &quot;amounts&quot;: {
+        &quot;source_total_usd&quot;: &quot;5700.00&quot;,
+        &quot;draft_usd&quot;: &quot;5500.00&quot;,
+        &quot;source_minus_draft_usd&quot;: &quot;200.00&quot;
+      },
+      &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
+      &quot;template_id&quot;: &quot;w2_discrepancy_default&quot;,
+      &quot;selection_mode&quot;: &quot;deterministic_fallback&quot;,
+      &quot;draft_question&quot;: &quot;The W-2s show $5,700.00 in federal withholding. Draft Form 1040 line 25a shows $5,500.00. The workpaper reports a $200.00 difference. Which source entry or draft figure needs correction?&quot;,
+      &quot;draft_only&quot;: true,
+      &quot;approval_granted&quot;: false
+    }
+  ]
+}</pre></details><details class="case"><summary><small>2025 · Forms 941 and W-3</small><strong>Quarterly payroll</strong><span>Four quarters total $12,000 withheld. The annual control shows $11,500.</span></summary><pre tabindex="0">{
+  &quot;rule_id&quot;: &quot;payroll_941_tieout_2025&quot;,
+  &quot;tax_year&quot;: 2025,
+  &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
+  &quot;checks&quot;: [
+    {
+      &quot;field&quot;: &quot;wages_box_1_vs_941_line_2&quot;,
+      &quot;total_941&quot;: &quot;100000&quot;,
+      &quot;total_w3&quot;: &quot;100000&quot;,
+      &quot;difference&quot;: &quot;0&quot;,
+      &quot;status&quot;: &quot;MATCH&quot;
+    },
+    {
+      &quot;field&quot;: &quot;withholding_box_2_vs_941_line_3&quot;,
+      &quot;total_941&quot;: &quot;12000&quot;,
+      &quot;total_w3&quot;: &quot;11500&quot;,
+      &quot;difference&quot;: &quot;500&quot;,
+      &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;
+    },
+    {
+      &quot;field&quot;: &quot;ss_wages_box_3_vs_941_line_5a&quot;,
+      &quot;total_941&quot;: &quot;100000&quot;,
+      &quot;total_w3&quot;: &quot;100000&quot;,
+      &quot;difference&quot;: &quot;0&quot;,
+      &quot;status&quot;: &quot;MATCH&quot;
+    },
+    {
+      &quot;field&quot;: &quot;medicare_wages_box_5_vs_941_line_5c&quot;,
+      &quot;total_941&quot;: &quot;100000&quot;,
+      &quot;total_w3&quot;: &quot;100000&quot;,
+      &quot;difference&quot;: &quot;0&quot;,
+      &quot;status&quot;: &quot;MATCH&quot;
+    }
+  ],
+  &quot;review_note&quot;: &quot;Payroll workpaper tie-out only. Verify Form 941-X amendments, third-party sick pay, and \u00a7125/401(k) pre-tax items.&quot;
+}</pre></details><details class="case"><summary><small>Trial balance</small><strong>Financial statements</strong><span>Debits of $1,500 and credits of $2,250 leave a $750 difference.</span></summary><pre tabindex="0">{
+  &quot;profit_and_loss&quot;: {
+    &quot;Operating Expenses&quot;: &quot;500.00&quot;,
+    &quot;Revenue&quot;: &quot;-2000.00&quot;
+  },
+  &quot;balance_sheet&quot;: {
+    &quot;Current Assets&quot;: &quot;1000.00&quot;,
+    &quot;Current Liabilities&quot;: &quot;-250.00&quot;
+  },
+  &quot;p_and_l_net&quot;: &quot;-1500.00&quot;,
+  &quot;balance_sheet_net&quot;: &quot;750.00&quot;,
+  &quot;total_debits&quot;: &quot;1500.00&quot;,
+  &quot;total_credits&quot;: &quot;2250.00&quot;,
+  &quot;trial_balance_difference&quot;: &quot;-750.00&quot;,
+  &quot;trial_balance_status&quot;: &quot;OUT OF BALANCE&quot;,
+  &quot;review_note&quot;: &quot;Draft mapping only. Confirm account classifications, normal balances, retained earnings, and financial-statement presentation with CPA reviewer.&quot;
+}</pre></details><details class="case"><summary><small>2026 · Reference screen</small><strong>Book-to-tax adjustments</strong><span>Inspect quantified adjustments and the separate amount awaiting review.</span></summary><pre tabindex="0">{
+  &quot;tax_year&quot;: 2026,
+  &quot;entity_type&quot;: &quot;1120&quot;,
+  &quot;items&quot;: [
+    {
+      &quot;description&quot;: &quot;Regulatory penalty - review&quot;,
+      &quot;code&quot;: &quot;FINES_162F&quot;,
+      &quot;book_amount&quot;: &quot;250.00&quot;,
+      &quot;proposed_addback&quot;: &quot;REVIEW_REQUIRED&quot;,
+      &quot;proposed_exclusion&quot;: &quot;0&quot;,
+      &quot;review_required&quot;: true,
+      &quot;unresolved_amount&quot;: &quot;250.00&quot;,
+      &quot;review_note&quot;: &quot;Potential \u00a7162(f) nondeductible amount. Determine whether statutory restitution, remediation, compliance, identification and other exception rules apply before quantifying an adjustment.&quot;
+    },
+    {
+      &quot;description&quot;: &quot;Business meals - default placeholder&quot;,
+      &quot;code&quot;: &quot;MEALS_274N&quot;,
+      &quot;book_amount&quot;: &quot;100.00&quot;,
+      &quot;proposed_addback&quot;: &quot;50.0000&quot;,
+      &quot;proposed_exclusion&quot;: &quot;0&quot;,
+      &quot;review_required&quot;: false,
+      &quot;unresolved_amount&quot;: &quot;0&quot;,
+      &quot;review_note&quot;: &quot;50% limitation placeholder. Verify business purpose, substantiation, exceptions and special rules.&quot;
+    },
+    {
+      &quot;description&quot;: &quot;Employer convenience meals - review&quot;,
+      &quot;code&quot;: &quot;CONVENIENCE_MEALS_274O&quot;,
+      &quot;book_amount&quot;: &quot;80.00&quot;,
+      &quot;proposed_addback&quot;: &quot;80.0000&quot;,
+      &quot;proposed_exclusion&quot;: &quot;0&quot;,
+      &quot;review_required&quot;: false,
+      &quot;unresolved_amount&quot;: &quot;0&quot;,
+      &quot;review_note&quot;: &quot;2025 uses a provisional 50% placeholder; for amounts paid/incurred after 2025, covered \u00a7274(o) costs are generally disallowed. Confirm coverage and statutory exceptions.&quot;
+    },
+    {
+      &quot;description&quot;: &quot;Municipal bond interest - review&quot;,
+      &quot;code&quot;: &quot;MUNI_INTEREST_103&quot;,
+      &quot;book_amount&quot;: &quot;50.00&quot;,
+      &quot;proposed_addback&quot;: &quot;0&quot;,
+      &quot;proposed_exclusion&quot;: &quot;50.00&quot;,
+      &quot;review_required&quot;: false,
+      &quot;unresolved_amount&quot;: &quot;0&quot;,
+      &quot;review_note&quot;: &quot;Potential \u00a7103 exclusion only. Verify instrument, ownership, private-activity bond and other statutory rules.&quot;
+    }
+  ],
+  &quot;book_amount_total&quot;: &quot;480.00&quot;,
+  &quot;quantified_proposed_addbacks_total&quot;: &quot;130.0000&quot;,
+  &quot;proposed_exclusions_total&quot;: &quot;50.00&quot;,
+  &quot;unresolved_review_amount_total&quot;: &quot;250.00&quot;,
+  &quot;net_quantified_proposed_adjustment&quot;: &quot;80.0000&quot;,
+  &quot;review_note&quot;: &quot;Draft M-1/M-3 support only. Items marked REVIEW_REQUIRED are excluded from quantified totals until a CPA resolves the facts. No tax return line mapping or filing conclusion is made.&quot;
+}</pre></details><details class="case"><summary><small>2026 · Reference screen</small><strong>Asset schedule</strong><span>1 asset included for the selected year. 1 from other years excluded.</span></summary><pre tabindex="0">{
+  &quot;tax_year&quot;: 2026,
+  &quot;assets&quot;: [
+    {
+      &quot;asset&quot;: &quot;Laptop&quot;,
+      &quot;cost&quot;: &quot;1800.00&quot;,
+      &quot;acquisition_date&quot;: &quot;2025-01-20&quot;,
+      &quot;placed_in_service_date&quot;: &quot;2026-02-01&quot;,
+      &quot;illustrative_bonus_rate&quot;: &quot;1.00&quot;,
+      &quot;illustrative_bonus_amount&quot;: &quot;1800.0000&quot;,
+      &quot;method&quot;: &quot;Reference screen only; no MACRS method, convention, eligibility or election determined.&quot;
+    }
+  ],
+  &quot;total_cost&quot;: &quot;1800.00&quot;,
+  &quot;total_illustrative_bonus&quot;: &quot;1800.0000&quot;,
+  &quot;section_179_reference&quot;: {
+    &quot;maximum&quot;: &quot;2560000&quot;,
+    &quot;phaseout_start&quot;: &quot;4090000&quot;,
+    &quot;suv_cap&quot;: &quot;32000&quot;
+  },
+  &quot;review_note&quot;: &quot;Not a MACRS schedule. Long-production-period property is withheld for separate review. Verify acquisition/binding-contract rules, qualified-property status, class life, convention, business use, listed property and elections.&quot;
+}</pre></details><details class="case"><summary><small>Bank intake</small><strong>CSV mapping</strong><span>See how a signed amount becomes a credit or debit before reconciliation.</span></summary><pre tabindex="0">{
+  &quot;synthetic_csv&quot;: &quot;Date,Net\n2025-01-01,300\n2025-01-02,-50\n&quot;,
+  &quot;ledger&quot;: [
+    {
+      &quot;Date&quot;: &quot;2025-01-01&quot;,
+      &quot;Amount&quot;: &quot;300&quot;,
+      &quot;Type&quot;: &quot;CREDIT&quot;
+    },
+    {
+      &quot;Date&quot;: &quot;2025-01-02&quot;,
+      &quot;Amount&quot;: &quot;50&quot;,
+      &quot;Type&quot;: &quot;DEBIT&quot;
+    }
+  ]
+}</pre></details><details class="case"><summary><small>Intake</small><strong>Document organizer</strong><span>Compare a labeled W-2 filename with a generic K-1 filename.</span></summary><pre tabindex="0">[
+  {
+    &quot;filename&quot;: &quot;Client_1040_W2.pdf&quot;,
+    &quot;suggested_form&quot;: &quot;1040&quot;,
+    &quot;category&quot;: &quot;unclassified&quot;,
+    &quot;routing_basis&quot;: &quot;Explicit form token and filename keywords only; human confirmation required.&quot;
+  },
+  {
+    &quot;filename&quot;: &quot;Generic_K1.pdf&quot;,
+    &quot;suggested_form&quot;: &quot;REVIEW&quot;,
+    &quot;category&quot;: &quot;unclassified&quot;,
+    &quot;routing_basis&quot;: &quot;Explicit form token and filename keywords only; human confirmation required.&quot;
+  }
+]</pre></details></div></section><section id="catalog"><h2>Workpaper directory</h2><p>These descriptions cover the wider project. Tax screens are year-specific drafts pending CPA review. The prototypes are recorded separately below.</p><details class="group"><summary>2025 individual returns</summary><dl><dt>1099 tie-out</dt><dd>Interest, dividends, nonemployee compensation, retirement distributions and federal withholding.</dd><dt>Schedule A</dt><dd>Medical expenses, state and local taxes, and a standard-versus-itemized deduction screen.</dd><dt>Schedule D and Form 8949</dt><dd>Capital transactions, loss limits and review flags.</dd><dt>Schedule E</dt><dd>Rental activity and partnership or S corporation K-1 inputs.</dd><dt>Schedules C and SE</dt><dd>Net business income and self-employment tax screen.</dd><dt>Form 8995</dt><dd>Simplified qualified business income screen.</dd><dt>Tax, credits and payments</dt><dd>Ordinary income tax brackets, child tax credit, withholding, estimated payments and overpayment or balance owed.</dd><dt>Form 1040 assembler</dt><dd>Combines workpapers into a draft diagnostic summary and multi-sheet Excel export.</dd></dl></details><details class="group"><summary>2025 business and other entities</summary><dl><dt>Form 1120</dt><dd>Corporate income and illustrative tax.</dd><dt>Form 1065</dt><dd>Partner allocation percentages and K-1 reconciliation.</dd><dt>Form 1120-S and Form 7203</dt><dd>S corporation income, compensation and shareholder stock basis screen.</dd><dt>Form 1041</dt><dd>Fiduciary income, distributions and investment income review.</dd><dt>Forms 990, 990-EZ, 990-N and 990-T</dt><dd>Exempt organization filing-tier and unrelated business income screens.</dd></dl></details><details class="group"><summary>Review workflow</summary><dl><dt>Session review queue</dt><dd>Tracks preparer, reviewer, evidence, discrepancies and sign-off for three checks. Manually entered names and session-only history.</dd><dt>M-3 and depreciation review</dt><dd>Partnership threshold inputs and unknown asset facts remain CPA review items.</dd><dt>2025 template kit</dt><dd>Merchant cleanup workbook and an asset evidence checklist. Available for a reviewer walkthrough.</dd></dl></details><details class="group"><summary>Separate prototypes and earlier projects</summary><dl><dt>2025 Schedule 1, line 21</dt><dd>Student-loan interest worksheet and referral cases.</dd><dt>Batch workpaper review</dt><dd>1040, 1120 and 1065 discrepancy checks, a Title 26 XML index and optional local Ollama drafting.</dd><dt>Notebook prototypes</dt><dd>PDF workpaper generation, bank statement extraction, Schedule C and India section 44ADA exploration.</dd><dt>Earlier automation work</dt><dd>GAAP and estate validation sketches, TaxAssist, Sovereign OS and outreach automation. Historical projects outside the product release.</dd></dl></details></section><section id="pilot"><h2>One ledger. One reviewer walkthrough.</h2><p>Deva Anil Kanth prepares one Excel tie-out and one exception list in your firm’s preferred format. Start with a blank layout or invented records. Agree on the scope, fee and acceptance criteria before the pilot.</p><a href="https://github.com/anilkanth98488-beep/sovereign-open-initiative/issues/new?title=Synthetic%20workpaper%20walkthrough&amp;body=I%20would%20like%20a%20three-minute%20synthetic%20demo.">Request a synthetic walkthrough on GitHub ↗</a><p><small>GitHub requests are public. Keep names of clients, contact details and financial records out of the request. If Deva emailed you this demo, you can reply privately to that email.</small></p></section></main><footer><span>Synthetic workpapers · CPA review pending</span><a href="https://github.com/anilkanth98488-beep/sovereign-open-initiative/tree/Core">Public project ↗</a></footer></html>
