@@ -11,6 +11,7 @@ import streamlit as st
 
 from core.reconciliation import Sovereign167VReconciler
 from modules.canada_tax.catalog import CANADA_REFERENCES, CANADA_TOPICS
+from modules.us_tax.medical import SOURCE, calculate
 from modules.us_tax.catalog import US_REFERENCES, US_TOPICS
 
 
@@ -34,7 +35,7 @@ def render() -> None:
     st.header("US & Canadian Tax Centre")
     st.warning(
         "Educational workpapers only. Tax rules, thresholds, forms, and filing deadlines "
-        "are not inferred or automatically applied. Select a tax year and verify every "
+        "require a year-specific rule or manual review. Select a tax year and verify every "
         "item against current official sources or a qualified professional."
     )
     jurisdiction = st.radio(
@@ -57,6 +58,26 @@ def render() -> None:
         str(year) for year in range(current_year - 6, current_year + 1)
     ]
     tax_year = st.selectbox("Tax year", years)
+    if jurisdiction == "United States" and tax_year == "2025" and not sub_jurisdiction.strip():
+        if st.checkbox("Use federal Schedule A medical expense rule"):
+            st.subheader("Medical expense workpaper · 2025")
+            st.caption("Synthetic cases only. Use positive or zero AGI. Review prior-year reimbursements separately.")
+            st.markdown(f"[2025 Schedule A instructions]({SOURCE})")
+            income = st.text_input("Form 1040 line 11b AGI (USD)")
+            paid = st.text_input("Eligible medical expenses paid during 2025 (USD)")
+            refunded = st.text_input("Same-year reimbursements for those expenses (USD)")
+            checked = st.checkbox("I checked payment year, eligible persons and expenses, reimbursements, and duplicate deductions or tax-free payments.")
+            if checked and all((income, paid, refunded)):
+                try:
+                    report = calculate(tax_year, income, paid, refunded)
+                except ValueError as exc:
+                    st.error(str(exc))
+                else:
+                    st.metric("Schedule A line 4 workpaper amount", report["line_4_excess_usd"])
+                    st.json(report)
+                    st.download_button("Download medical workpaper", json.dumps(report, indent=2),
+                                       file_name="us-2025-medical.json", mime="application/json")
+            return
     topic = st.selectbox("Workpaper area", list(topics))
     st.caption(topics[topic])
 
