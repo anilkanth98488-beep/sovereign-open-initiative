@@ -1,0 +1,56 @@
+name: Public ecosystem tests
+on:
+  push:
+    branches: [taxflow-demo-pages, public-ecosystem-pipeline]
+  pull_request:
+    branches: [taxflow-demo-pages]
+permissions:
+  contents: read
+jobs:
+  public-packet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Read the published source archive
+        run: |
+          python - <<'PY'
+          import base64, io, re, zipfile, pathlib
+          html = pathlib.Path('docs/workpaper-lab.html').read_text()
+          data = re.search(r'<script id="archive" type="application/octet-stream">([^<]+)', html)[1]
+          with zipfile.ZipFile(io.BytesIO(base64.b64decode(data, validate=True))) as archive:
+              archive.extractall('public-source')
+          PY
+      - name: Compile and run all tests from the public download
+        working-directory: public-source
+        run: |
+          python -m pip install -r requirements.txt
+          python -m compileall -q app.py core modules ecosystem tests
+          python -m unittest discover -s tests -v
+      - name: Chromium public browser verification
+        run: |
+          python -m pip install playwright
+          python -m playwright install chromium
+          python -m http.server 8500 --bind 127.0.0.1 --directory docs >/tmp/lab-http.log 2>&1 &
+          python - <<'PY'
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              b=p.chromium.launch()
+              page=b.new_page()
+              page.goto('http://127.0.0.1:8500/workpaper-lab.html')
+              assert page.locator('#role option').count()==22
+              page.click('#run')
+              page.wait_for_selector('#save:visible',timeout=150000)
+              assert 'PASS' in page.locator('#status').inner_text()
+              page.check('#eco-eligible')
+              page.click('#eco-run')
+              page.wait_for_selector('#eco-links:visible',timeout=180000)
+              assert '750.00' in page.locator('#eco-status').inner_text() and '30000' in page.locator('#eco-status').inner_text()
+              assert page.locator('#eco-links a').count()==3
+              page.fill('#eco-input','bad input')
+              assert not page.locator('#eco-links').is_visible()
+              b.close()
+          PY
