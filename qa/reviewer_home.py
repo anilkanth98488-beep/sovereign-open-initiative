@@ -81,6 +81,7 @@ def run(browser,engine,width,height):
         if loc=='#contact':
             p.route('https://github.com/**',lambda route:route.fulfill(status=200,body='GitHub walkthrough request'))
         activate(link)
+        p.wait_for_url(lambda url: url == target, wait_until="domcontentloaded")
         assert p.url==target,(p.url,target)
         if loc=='footer a':assert p.locator('#ecosystem').is_visible()
         p.goto(base,wait_until='networkidle')
