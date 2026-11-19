@@ -1,507 +1,11 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sovereign TaxFlow | Ledger review desk</title>
-<style>.result{margin:.5rem 0;padding:.5rem;background:#f2f5ef}.result pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:22rem;overflow:auto;font:13px/1.5 monospace}.result summary{color:#145449}
-*{box-sizing:border-box}body{margin:auto;max-width:980px;padding:0 5vw 45px;background:#f8f7f1;color:#19352f;font:17px/1.55 "Source Sans 3",system-ui,sans-serif}header,footer{padding:18px 0;border-bottom:1px solid #bbc7be;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}header strong{font: bold 21px Georgia,serif}a{color:#145449;text-underline-offset:4px}h1,h2{font-family:"Source Serif 4",Georgia,serif;line-height:1.12}h1{font-size:clamp(44px,7vw,76px);letter-spacing:-.04em;margin:44px 0 12px;max-width:720px}h2{font-size:29px;margin:0 0 16px}p{max-width:670px}section{margin:30px 0}.desk{background:white;border:1px solid #c5cec6;padding:clamp(16px,4vw,35px);border-radius:8px}.rows{margin:0 0 18px;padding:0}.rows div{display:flex;justify-content:space-between;border-bottom:1px solid #d8ded8;padding:5px 0;gap:10px}.rows dd{margin:0;font-variant-numeric:tabular-nums}fieldset{border:0;margin:0;padding:0}legend{font-weight:bold;margin:8px 0}label{display:inline-block;padding:9px;cursor:pointer}input{accent-color:#145449}article{display:none;padding:16px;border-left:4px solid #216a54;background:#eff6ef;margin-top:10px}article.fail{background:#fff1e3;border-color:#ae530d}#tie:checked~.pass,#gap:checked~.fail{display:block}article p{margin:6px 0 12px}.button{display:inline-block;background:#155545;color:white;border-radius:4px;padding:10px 14px;text-decoration:none}footer{font-size:14px}summary{cursor:pointer}code{overflow-wrap:anywhere;font-size:13px} :focus-visible{outline:3px solid #966200;outline-offset:2px}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start;gap:12px}.case,.group{background:white;border:1px solid #c5cec6;border-radius:8px;padding:16px}.case summary small,.case summary strong,.case summary span{display:block}.case small{color:#37695e}.case summary strong{font: bold 22px Georgia,serif;margin:5px 0}.case summary span,.group dd{font-size:15px}.case pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 monospace;background:#f2f5ef;padding:12px;max-height:25rem;overflow:auto}.group{margin:8px 0}.group summary{font-weight:bold}.group dt{font-weight:bold;margin-top:12px}.group dd{margin-left:0}.links{display:flex;flex-wrap:wrap;gap:8px 20px}.case summary::marker{color:#21765f}</style>
-<header><strong>Sovereign TaxFlow</strong><a href="#pilot">Fixed-fee pilot ↓</a></header>
-<main><h1>Tax workpapers for reviewers</h1><nav class="links" aria-label="Workpapers"><a href="workpaper-lab.html"><strong>Run all 22 workpaper checks</strong></a> <a href="#ledger">Try the ledger</a> <a href="#live-engine">Run a Python engine</a><a href="#examples">Sample workpapers</a><a href="#catalog">Workpaper directory</a><a href="#packet">Review packet</a> <a href="#pilot">Pilot offer</a></nav><p>Follow two ledger entries into an Excel workpaper. Choose a control balance to see what the reviewer can sign off and what still needs evidence.</p>
-<section id="live-engine" class="desk"><h2>Run the 2025 medical workpaper</h2><p>Change these invented figures and run the public Schedule A Python rule on your device. The first run downloads the Python runtime.</p><form id="medical-form"><label>Adjusted gross income ($) <input name="agi" inputmode="decimal" required value="60000.00"></label><label>Eligible medical payments ($) <input name="paid" inputmode="decimal" required value="9000.00"></label><label>Same-year reimbursements ($) <input name="refunded" inputmode="decimal" required value="1000.00"></label><button type="submit">Run Python check</button></form><p id="medical-status" role="status" aria-live="polite"></p><pre id="medical-output" hidden></pre><p><a href="https://github.com/anilkanth98488-beep/sovereign-open-initiative/blob/2b85946cce93e6d04ad99fd339f4e1de3c6d2bda/modules/us_tax/medical.py">Inspect the public rule</a> · <a href="#public-summary">Open the synthetic packet summary</a></p></section>
-<style>#medical-form{display:flex;flex-wrap:wrap;align-items:end;gap:1rem}#medical-form label{display:grid;gap:.4rem}#medical-form input{font:inherit;padding:.6rem;width:11rem;max-width:100%}#medical-output{white-space:pre-wrap;overflow-wrap:anywhere}</style>
-<script>
-(()=>{const f=document.querySelector('#medical-form'),status=document.querySelector('#medical-status'),out=document.querySelector('#medical-output');let worker,version=0;
-const source="\"\"\"TY2025 federal Schedule A medical workpaper, for reviewed synthetic inputs.\"\"\"\nimport re\nfrom decimal import Decimal, ROUND_HALF_UP\n\nSOURCE = \"https://www.irs.gov/pub/irs-prior/i1040sca--2025.pdf\"\nRULE = \"US-FED-2025-IRC213-v1\"\nCENT = Decimal(\"0.01\")\n\n\ndef amount(text):\n    if not isinstance(text, str) or not re.fullmatch(r\"[0-9]{1,13}(?:\\.[0-9]{1,2})?\", text.strip()):\n        raise ValueError(\"Enter a nonnegative USD amount with up to two decimal places.\")\n    return Decimal(text.strip())\n\n\ndef calculate(year, agi, eligible_paid, reimbursements):\n    if str(year) != \"2025\":\n        raise ValueError(\"Only tax year 2025 is supported by this rule.\")\n    income, paid, refunded = map(amount, (agi, eligible_paid, reimbursements))\n    if refunded > paid:\n        raise ValueError(\"Review reimbursements exceeding the eligible payments.\")\n    net = paid - refunded\n    floor = income * Decimal(\"0.075\")\n    excess = max(Decimal(0), net - floor)\n    return {\n        \"rule\": RULE, \"authority\": \"26 USC 213(a)\", \"instructions\": SOURCE,\n        \"year\": 2025, \"jurisdiction\": \"US federal\", \"status\": \"Pending reviewer approval\",\n        \"eligible_paid\": str(paid), \"same_year_reimbursements\": str(refunded),\n        \"line_1_net_medical\": str(net), \"line_2_agi\": str(income),\n        \"line_3_threshold_exact\": str(floor),\n        \"line_4_excess_usd\": str(excess.quantize(CENT, rounding=ROUND_HALF_UP)),\n    }\n";
-function reset(){version++;out.hidden=true;out.textContent='';status.textContent='';}
-f.addEventListener('input',reset);
-f.addEventListener('submit',e=>{e.preventDefault();reset();status.textContent='Loading Python and running the workpaper…';
-if(!worker){const js="let runtime;self.onmessage=async({data})=>{try{if(!runtime){importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js');runtime=loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/'})}const py=await runtime;py.runPython(data.source);py.globals.set('amounts_json',JSON.stringify(data.values));const result=JSON.parse(py.runPython(\"import json\\njson.dumps(calculate('2025', *json.loads(amounts_json)))\"));postMessage({id:data.id,result})}catch(err){postMessage({id:data.id,error:String(err.message||err)})}}";
-try{const url=URL.createObjectURL(new Blob([js],{type:'text/javascript'}));worker=new Worker(url);URL.revokeObjectURL(url);}catch(err){status.textContent='Python could not start. Open the public rule link below.';return;}
-worker.onerror=()=>{worker.terminate();worker=null;out.hidden=true;status.textContent='Python could not load. Check your connection and try again.'};
-worker.onmessage=({data})=>{if(data.id!==version)return;if(data.error){out.hidden=true;status.textContent='Check could not complete: '+data.error;return}status.textContent='Line 4 medical excess: $'+data.result.line_4_excess_usd+' · Pending reviewer approval';out.textContent=JSON.stringify(data.result,null,2);out.hidden=false};}worker.postMessage({id:version,source,values:['agi','paid','refunded'].map(k=>f.elements[k].value)});});})();
-</script>
-<section class="desk" id="ledger"><h2>Try the synthetic ledger</h2><dl class="rows"><div><dt>Opening balance</dt><dd>$1,000.00</dd></div><div><dt>Jan 1 · Credit</dt><dd>+$300.00</dd></div><div><dt>Jan 2 · Debit</dt><dd>−$50.00</dd></div><div><dt><strong>Calculated closing</strong></dt><dd><strong>$1,250.00</strong></dd></div></dl>
-<fieldset><legend>Choose the expected closing balance</legend><input id="tie" type="radio" name="control" checked><label for="tie">$1,250.00</label> <input id="gap" type="radio" name="control"><label for="gap">$1,251.00</label><article class="pass"><strong>PASS · The balances tie.</strong><p>Calculated minus expected: 0.00 USD. Tolerance: 0.01 USD.</p><a class="button" download="TaxFlow-synthetic-pass.xlsx" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,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">Download sample workpaper (.xlsx)</a><details><summary>Trace this Python result</summary><p>Input fingerprint<br><code>b5ed6e2549888f1b5bc6a10ff131911f3d2e071f755eb0f656738730a3f7444d</code></p><p>Parameter fingerprint<br><code>66be7b2f28c36c3ddb576abb55fddf9d8926067fd138c37b79dc122161b4dfc4</code></p><p>Rule: <code>Sovereign167VReconciler-v2.15-workpaper</code><br>Reviewer sign-off: pending</p></details></article><article class="fail"><strong>FAIL · The ledger is $1.00 short.</strong><p>Calculated minus expected: -1.00 USD. Tolerance: 0.01 USD.</p><p>Reviewer question: Which source entry or control record explains the difference? Keep the exception open until evidence supports a correction.</p><details><summary>Trace this Python result</summary><p>Input fingerprint<br><code>b5ed6e2549888f1b5bc6a10ff131911f3d2e071f755eb0f656738730a3f7444d</code></p><p>Parameter fingerprint<br><code>46cd821f5e5b9067c11d9ff26a842649f42efe9e500f758951cab6a92b35edb3</code></p><p>Rule: <code>Sovereign167VReconciler-v2.15-workpaper</code><br>Reviewer sign-off: pending</p></details></article></fieldset></section><section id="examples"><h2>Explore sample workpapers</h2><p>Open a case to inspect its saved Python output. Every record here is synthetic. Review and sign-off remain with the firm.</p><div class="cards"><details class="case"><summary><small>2025 · Form 1040</small><strong>W-2 wages &amp; withholding</strong><span>Two W-2s show $5,700 withheld. The draft return shows $5,500.</span></summary><pre tabindex="0">{
-  &quot;year&quot;: 2025,
-  &quot;authority&quot;: &quot;https://www.irs.gov/pub/irs-prior/f1040--2025.pdf&quot;,
-  &quot;reviewer_approval&quot;: &quot;PENDING&quot;,
-  &quot;expected_documents&quot;: [
-    &quot;W2-A&quot;,
-    &quot;W2-B&quot;
-  ],
-  &quot;missing_documents&quot;: [],
-  &quot;unexpected_documents&quot;: [],
-  &quot;evidence&quot;: [
-    {
-      &quot;reference&quot;: &quot;W2-A&quot;,
-      &quot;box1&quot;: &quot;45000.00&quot;,
-      &quot;box2&quot;: &quot;4500.00&quot;
-    },
-    {
-      &quot;reference&quot;: &quot;W2-B&quot;,
-      &quot;box1&quot;: &quot;15000.00&quot;,
-      &quot;box2&quot;: &quot;1200.00&quot;
-    }
-  ],
-  &quot;checks&quot;: [
-    {
-      &quot;line&quot;: &quot;1a&quot;,
-      &quot;box&quot;: &quot;box1&quot;,
-      &quot;blank_on&quot;: [],
-      &quot;source_total_usd&quot;: &quot;60000.00&quot;,
-      &quot;draft_usd&quot;: &quot;60000.00&quot;,
-      &quot;source_minus_draft_usd&quot;: &quot;0.00&quot;,
-      &quot;status&quot;: &quot;MATCH&quot;
-    },
-    {
-      &quot;line&quot;: &quot;25a&quot;,
-      &quot;box&quot;: &quot;box2&quot;,
-      &quot;blank_on&quot;: [],
-      &quot;source_total_usd&quot;: &quot;5700.00&quot;,
-      &quot;draft_usd&quot;: &quot;5500.00&quot;,
-      &quot;source_minus_draft_usd&quot;: &quot;200.00&quot;,
-      &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;
-    }
-  ]
-}</pre></details><details class="case"><summary><small>Offline drafting</small><strong>Reviewer follow-up</strong><span>Read the question generated from the same $200 difference.</span></summary><pre tabindex="0">{
-  &quot;status&quot;: &quot;DRAFT_READY&quot;,
-  &quot;schema&quot;: &quot;w2_tieout&quot;,
-  &quot;tax_year&quot;: 2025,
-  &quot;draft_only&quot;: true,
-  &quot;approval_granted&quot;: false,
-  &quot;note_count&quot;: 1,
-  &quot;notes&quot;: [
-    {
-      &quot;note_type&quot;: &quot;DISCREPANCY&quot;,
-      &quot;rule_id&quot;: &quot;1040_w2_tieout&quot;,
-      &quot;tax_year&quot;: 2025,
-      &quot;line&quot;: &quot;25a&quot;,
-      &quot;source_references&quot;: [
-        &quot;W2-A&quot;,
-        &quot;W2-B&quot;
-      ],
-      &quot;amounts&quot;: {
-        &quot;source_total_usd&quot;: &quot;5700.00&quot;,
-        &quot;draft_usd&quot;: &quot;5500.00&quot;,
-        &quot;source_minus_draft_usd&quot;: &quot;200.00&quot;
-      },
-      &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
-      &quot;template_id&quot;: &quot;w2_discrepancy_default&quot;,
-      &quot;selection_mode&quot;: &quot;deterministic_fallback&quot;,
-      &quot;draft_question&quot;: &quot;The W-2s show $5,700.00 in federal withholding. Draft Form 1040 line 25a shows $5,500.00. The workpaper reports a $200.00 difference. Which source entry or draft figure needs correction?&quot;,
-      &quot;draft_only&quot;: true,
-      &quot;approval_granted&quot;: false
-    }
-  ]
-}</pre></details><details class="case"><summary><small>2025 · Forms 941 and W-3</small><strong>Quarterly payroll</strong><span>Four quarters total $12,000 withheld. The annual control shows $11,500.</span></summary><pre tabindex="0">{
-  &quot;rule_id&quot;: &quot;payroll_941_tieout_2025&quot;,
-  &quot;tax_year&quot;: 2025,
-  &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
-  &quot;checks&quot;: [
-    {
-      &quot;field&quot;: &quot;wages_box_1_vs_941_line_2&quot;,
-      &quot;total_941&quot;: &quot;100000&quot;,
-      &quot;total_w3&quot;: &quot;100000&quot;,
-      &quot;difference&quot;: &quot;0&quot;,
-      &quot;status&quot;: &quot;MATCH&quot;
-    },
-    {
-      &quot;field&quot;: &quot;withholding_box_2_vs_941_line_3&quot;,
-      &quot;total_941&quot;: &quot;12000&quot;,
-      &quot;total_w3&quot;: &quot;11500&quot;,
-      &quot;difference&quot;: &quot;500&quot;,
-      &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;
-    },
-    {
-      &quot;field&quot;: &quot;ss_wages_box_3_vs_941_line_5a&quot;,
-      &quot;total_941&quot;: &quot;100000&quot;,
-      &quot;total_w3&quot;: &quot;100000&quot;,
-      &quot;difference&quot;: &quot;0&quot;,
-      &quot;status&quot;: &quot;MATCH&quot;
-    },
-    {
-      &quot;field&quot;: &quot;medicare_wages_box_5_vs_941_line_5c&quot;,
-      &quot;total_941&quot;: &quot;100000&quot;,
-      &quot;total_w3&quot;: &quot;100000&quot;,
-      &quot;difference&quot;: &quot;0&quot;,
-      &quot;status&quot;: &quot;MATCH&quot;
-    }
-  ],
-  &quot;review_note&quot;: &quot;Payroll workpaper tie-out only. Verify Form 941-X amendments, third-party sick pay, and \u00a7125/401(k) pre-tax items.&quot;
-}</pre></details><details class="case"><summary><small>Trial balance</small><strong>Financial statements</strong><span>Debits of $1,500 and credits of $2,250 leave a $750 difference.</span></summary><pre tabindex="0">{
-  &quot;profit_and_loss&quot;: {
-    &quot;Operating Expenses&quot;: &quot;500.00&quot;,
-    &quot;Revenue&quot;: &quot;-2000.00&quot;
-  },
-  &quot;balance_sheet&quot;: {
-    &quot;Current Assets&quot;: &quot;1000.00&quot;,
-    &quot;Current Liabilities&quot;: &quot;-250.00&quot;
-  },
-  &quot;p_and_l_net&quot;: &quot;-1500.00&quot;,
-  &quot;balance_sheet_net&quot;: &quot;750.00&quot;,
-  &quot;total_debits&quot;: &quot;1500.00&quot;,
-  &quot;total_credits&quot;: &quot;2250.00&quot;,
-  &quot;trial_balance_difference&quot;: &quot;-750.00&quot;,
-  &quot;trial_balance_status&quot;: &quot;OUT OF BALANCE&quot;,
-  &quot;review_note&quot;: &quot;Draft mapping only. Confirm account classifications, normal balances, retained earnings, and financial-statement presentation with CPA reviewer.&quot;
-}</pre></details><details class="case"><summary><small>2026 · Reference screen</small><strong>Book-to-tax adjustments</strong><span>Inspect quantified adjustments and the separate amount awaiting review.</span></summary><pre tabindex="0">{
-  &quot;tax_year&quot;: 2026,
-  &quot;entity_type&quot;: &quot;1120&quot;,
-  &quot;items&quot;: [
-    {
-      &quot;description&quot;: &quot;Regulatory penalty - review&quot;,
-      &quot;code&quot;: &quot;FINES_162F&quot;,
-      &quot;book_amount&quot;: &quot;250.00&quot;,
-      &quot;proposed_addback&quot;: &quot;REVIEW_REQUIRED&quot;,
-      &quot;proposed_exclusion&quot;: &quot;0&quot;,
-      &quot;review_required&quot;: true,
-      &quot;unresolved_amount&quot;: &quot;250.00&quot;,
-      &quot;review_note&quot;: &quot;Potential \u00a7162(f) nondeductible amount. Determine whether statutory restitution, remediation, compliance, identification and other exception rules apply before quantifying an adjustment.&quot;
-    },
-    {
-      &quot;description&quot;: &quot;Business meals - default placeholder&quot;,
-      &quot;code&quot;: &quot;MEALS_274N&quot;,
-      &quot;book_amount&quot;: &quot;100.00&quot;,
-      &quot;proposed_addback&quot;: &quot;50.0000&quot;,
-      &quot;proposed_exclusion&quot;: &quot;0&quot;,
-      &quot;review_required&quot;: false,
-      &quot;unresolved_amount&quot;: &quot;0&quot;,
-      &quot;review_note&quot;: &quot;50% limitation placeholder. Verify business purpose, substantiation, exceptions and special rules.&quot;
-    },
-    {
-      &quot;description&quot;: &quot;Employer convenience meals - review&quot;,
-      &quot;code&quot;: &quot;CONVENIENCE_MEALS_274O&quot;,
-      &quot;book_amount&quot;: &quot;80.00&quot;,
-      &quot;proposed_addback&quot;: &quot;80.0000&quot;,
-      &quot;proposed_exclusion&quot;: &quot;0&quot;,
-      &quot;review_required&quot;: false,
-      &quot;unresolved_amount&quot;: &quot;0&quot;,
-      &quot;review_note&quot;: &quot;2025 uses a provisional 50% placeholder; for amounts paid/incurred after 2025, covered \u00a7274(o) costs are generally disallowed. Confirm coverage and statutory exceptions.&quot;
-    },
-    {
-      &quot;description&quot;: &quot;Municipal bond interest - review&quot;,
-      &quot;code&quot;: &quot;MUNI_INTEREST_103&quot;,
-      &quot;book_amount&quot;: &quot;50.00&quot;,
-      &quot;proposed_addback&quot;: &quot;0&quot;,
-      &quot;proposed_exclusion&quot;: &quot;50.00&quot;,
-      &quot;review_required&quot;: false,
-      &quot;unresolved_amount&quot;: &quot;0&quot;,
-      &quot;review_note&quot;: &quot;Potential \u00a7103 exclusion only. Verify instrument, ownership, private-activity bond and other statutory rules.&quot;
-    }
-  ],
-  &quot;book_amount_total&quot;: &quot;480.00&quot;,
-  &quot;quantified_proposed_addbacks_total&quot;: &quot;130.0000&quot;,
-  &quot;proposed_exclusions_total&quot;: &quot;50.00&quot;,
-  &quot;unresolved_review_amount_total&quot;: &quot;250.00&quot;,
-  &quot;net_quantified_proposed_adjustment&quot;: &quot;80.0000&quot;,
-  &quot;review_note&quot;: &quot;Draft M-1/M-3 support only. Items marked REVIEW_REQUIRED are excluded from quantified totals until a CPA resolves the facts. No tax return line mapping or filing conclusion is made.&quot;
-}</pre></details><details class="case"><summary><small>2026 · Reference screen</small><strong>Asset schedule</strong><span>1 asset included for the selected year. 1 from other years excluded.</span></summary><pre tabindex="0">{
-  &quot;tax_year&quot;: 2026,
-  &quot;assets&quot;: [
-    {
-      &quot;asset&quot;: &quot;Laptop&quot;,
-      &quot;cost&quot;: &quot;1800.00&quot;,
-      &quot;acquisition_date&quot;: &quot;2025-01-20&quot;,
-      &quot;placed_in_service_date&quot;: &quot;2026-02-01&quot;,
-      &quot;illustrative_bonus_rate&quot;: &quot;1.00&quot;,
-      &quot;illustrative_bonus_amount&quot;: &quot;1800.0000&quot;,
-      &quot;method&quot;: &quot;Reference screen only; no MACRS method, convention, eligibility or election determined.&quot;
-    }
-  ],
-  &quot;total_cost&quot;: &quot;1800.00&quot;,
-  &quot;total_illustrative_bonus&quot;: &quot;1800.0000&quot;,
-  &quot;section_179_reference&quot;: {
-    &quot;maximum&quot;: &quot;2560000&quot;,
-    &quot;phaseout_start&quot;: &quot;4090000&quot;,
-    &quot;suv_cap&quot;: &quot;32000&quot;
-  },
-  &quot;review_note&quot;: &quot;Not a MACRS schedule. Long-production-period property is withheld for separate review. Verify acquisition/binding-contract rules, qualified-property status, class life, convention, business use, listed property and elections.&quot;
-}</pre></details><details class="case"><summary><small>Bank intake</small><strong>CSV mapping</strong><span>See how a signed amount becomes a credit or debit before reconciliation.</span></summary><pre tabindex="0">{
-  &quot;synthetic_csv&quot;: &quot;Date,Net\n2025-01-01,300\n2025-01-02,-50\n&quot;,
-  &quot;ledger&quot;: [
-    {
-      &quot;Date&quot;: &quot;2025-01-01&quot;,
-      &quot;Amount&quot;: &quot;300&quot;,
-      &quot;Type&quot;: &quot;CREDIT&quot;
-    },
-    {
-      &quot;Date&quot;: &quot;2025-01-02&quot;,
-      &quot;Amount&quot;: &quot;50&quot;,
-      &quot;Type&quot;: &quot;DEBIT&quot;
-    }
-  ]
-}</pre></details><details class="case"><summary><small>Intake</small><strong>Document organizer</strong><span>Compare a labeled W-2 filename with a generic K-1 filename.</span></summary><pre tabindex="0">[
-  {
-    &quot;filename&quot;: &quot;Client_1040_W2.pdf&quot;,
-    &quot;suggested_form&quot;: &quot;1040&quot;,
-    &quot;category&quot;: &quot;unclassified&quot;,
-    &quot;routing_basis&quot;: &quot;Explicit form token and filename keywords only; human confirmation required.&quot;
-  },
-  {
-    &quot;filename&quot;: &quot;Generic_K1.pdf&quot;,
-    &quot;suggested_form&quot;: &quot;REVIEW&quot;,
-    &quot;category&quot;: &quot;unclassified&quot;,
-    &quot;routing_basis&quot;: &quot;Explicit form token and filename keywords only; human confirmation required.&quot;
-  }
-]</pre></details></div></section><section id="catalog"><h2>Workpaper directory</h2><p>Open a section, then choose Inspect synthetic example to see its inputs and saved result. Tax screens are year-specific drafts pending CPA review. The prototypes are recorded separately below.</p><details class="group"><summary>2025 individual returns</summary><dl><dt>1099 tie-out</dt><dd>Interest, dividends, nonemployee compensation, retirement distributions and federal withholding.<details class="result"><summary>Inspect synthetic example</summary><p>The draft includes dividends with no corresponding source in the sample.</p><strong>Inputs</strong><pre>{
-  &quot;documents&quot;: [
-    {
-      &quot;form_type&quot;: &quot;1099-INT&quot;,
-      &quot;reference&quot;: &quot;INT_BankA&quot;,
-      &quot;taxable_interest&quot;: &quot;1200.50&quot;,
-      &quot;federal_withholding&quot;: &quot;100.00&quot;
-    }
-  ],
-  &quot;draft_1040&quot;: {
-    &quot;2b&quot;: &quot;1200.50&quot;,
-    &quot;3b&quot;: &quot;500.00&quot;,
-    &quot;25b&quot;: &quot;100.00&quot;
-  }
-}</pre><strong>Python result</strong><pre>{
-  &quot;rule_id&quot;: &quot;1040_1099_tieout_2025&quot;,
-  &quot;year&quot;: 2025,
-  &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
-  &quot;missing_documents&quot;: [],
-  &quot;unexpected_documents&quot;: [],
-  &quot;evidence&quot;: [
-    {
-      &quot;form_type&quot;: &quot;1099-INT&quot;,
-      &quot;reference&quot;: &quot;INT_BankA&quot;
-    }
-  ],
-  &quot;checks&quot;: [
-    {
-      &quot;form&quot;: &quot;1099-INT&quot;,
-      &quot;box&quot;: &quot;Box 1&quot;,
-      &quot;line&quot;: &quot;2b&quot;,
-      &quot;field_label&quot;: &quot;taxable interest (1099-INT Box 1)&quot;,
-      &quot;source_total_usd&quot;: &quot;1200.50&quot;,
-      &quot;draft_usd&quot;: &quot;1200.50&quot;,
-      &quot;source_minus_draft_usd&quot;: &quot;0.00&quot;,
-      &quot;blank_on&quot;: [],
-      &quot;status&quot;: &quot;MATCH&quot;
-    },
-    {
-      &quot;form&quot;: &quot;1099-DIV&quot;,
-      &quot;box&quot;: &quot;Box 1a&quot;,
-      &quot;line&quot;: &quot;3b&quot;,
-      &quot;field_label&quot;: &quot;ordinary dividends (1099-DIV Box 1a)&quot;,
-      &quot;source_total_usd&quot;: &quot;0&quot;,
-      &quot;draft_usd&quot;: &quot;500.00&quot;,
-      &quot;source_minus_draft_usd&quot;: &quot;-500.00&quot;,
-      &quot;blank_on&quot;: [],
-      &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;
-    },
-    {
-      &quot;form&quot;: &quot;1099-DIV&quot;,
-      &quot;box&quot;: &quot;Box 1b&quot;,
-      &quot;line&quot;: &quot;3a&quot;,
-      &quot;field_label&quot;: &quot;qualified dividends (1099-DIV Box 1b)&quot;,
-      &quot;source_total_usd&quot;: &quot;0&quot;,
-      &quot;draft_usd&quot;: &quot;0.00&quot;,
-      &quot;source_minus_draft_usd&quot;: &quot;0&quot;,
-      &quot;blank_on&quot;: [],
-      &quot;status&quot;: &quot;MATCH&quot;
-    },
-    {
-      &quot;form&quot;: &quot;1099-NEC&quot;,
-      &quot;box&quot;: &quot;Box 1&quot;,
-      &quot;line&quot;: &quot;Schedule 1 / Sch C&quot;,
-      &quot;field_label&quot;: &quot;nonemployee compensation (1099-NEC Box 1)&quot;,
-      &quot;source_total_usd&quot;: &quot;0&quot;,
-      &quot;draft_usd&quot;: &quot;0.00&quot;,
-      &quot;source_minus_draft_usd&quot;: &quot;0&quot;,
-      &quot;blank_on&quot;: [],
-      &quot;status&quot;: &quot;MATCH&quot;
-    },
-    {
-      &quot;form&quot;: &quot;1099-R&quot;,
-      &quot;box&quot;: &quot;Box 1&quot;,
-      &quot;line&quot;: &quot;5a&quot;,
-      &quot;field_label&quot;: &quot;gross retirement distribution (1099-R Box 1)&quot;,
-      &quot;source_total_usd&quot;: &quot;0&quot;,
-      &quot;draft_usd&quot;: &quot;0.00&quot;,
-      &quot;source_minus_draft_usd&quot;: &quot;0&quot;,
-      &quot;blank_on&quot;: [],
-      &quot;status&quot;: &quot;MATCH&quot;
-    },
-    {
-      &quot;form&quot;: &quot;1099-R&quot;,
-      &quot;box&quot;: &quot;Box 2a&quot;,
-      &quot;line&quot;: &quot;5b&quot;,
-      &quot;field_label&quot;: &quot;taxable retirement distribution (1099-R Box 2a)&quot;,
-      &quot;source_total_usd&quot;: &quot;0&quot;,
-      &quot;draft_usd&quot;: &quot;0.00&quot;,
-      &quot;source_minus_draft_usd&quot;: &quot;0&quot;,
-      &quot;blank_on&quot;: [],
-      &quot;status&quot;: &quot;MATCH&quot;
-    },
-    {
-      &quot;form&quot;: &quot;ALL_1099&quot;,
-      &quot;box&quot;: &quot;Box 4&quot;,
-      &quot;line&quot;: &quot;25b&quot;,
-      &quot;field_label&quot;: &quot;federal income tax withheld (1099 Box 4)&quot;,
-      &quot;source_total_usd&quot;: &quot;100.00&quot;,
-      &quot;draft_usd&quot;: &quot;100.00&quot;,
-      &quot;source_minus_draft_usd&quot;: &quot;0.00&quot;,
-      &quot;blank_on&quot;: [],
-      &quot;status&quot;: &quot;MATCH&quot;
-    }
-  ],
-  &quot;review_note&quot;: &quot;Workpaper tie-out only. 1099-NEC Schedule C/SE tax applicability and 1099-R Box 2b taxable-amount determinations require CPA review.&quot;
-}</pre></details></dd><dt>Schedule A</dt><dd>Medical expenses, state and local taxes, and a standard-versus-itemized deduction screen.<details class="result"><summary>Inspect synthetic example</summary><p>Medical expense component only. The broader deduction comparison uses provisional reference values.</p><strong>Inputs</strong><pre>{
-  &quot;tax_year&quot;: 2025,
-  &quot;filing_status&quot;: &quot;single&quot;,
-  &quot;agi&quot;: &quot;80000.00&quot;,
-  &quot;eligible_medical_expenses&quot;: &quot;9000.00&quot;,
-  &quot;medical_reimbursements&quot;: &quot;1000.00&quot;
-}</pre><strong>Python result</strong><pre>{
-  &quot;gross_eligible&quot;: &quot;9000.00&quot;,
-  &quot;reimbursements&quot;: &quot;1000.00&quot;,
-  &quot;net_unreimbursed&quot;: &quot;8000.00&quot;,
-  &quot;agi_7_5pct_floor&quot;: &quot;6000.00000&quot;,
-  &quot;schedule_a_line_4&quot;: &quot;2000.00000&quot;
-}</pre></details></dd><dt>Schedule D and Form 8949</dt><dd>Capital transactions, loss limits and review flags.<details class="result"><summary>Inspect synthetic example</summary><p>Inspect the short-term and long-term amounts and the wash-sale review flag.</p><strong>Inputs</strong><pre>{
-  &quot;transactions&quot;: [
-    {
-      &quot;holding_period&quot;: &quot;short&quot;,
-      &quot;proceeds&quot;: &quot;10000.00&quot;,
-      &quot;cost_basis&quot;: &quot;8000.00&quot;,
-      &quot;wash_sale_disallowed&quot;: &quot;0&quot;
-    },
-    {
-      &quot;holding_period&quot;: &quot;long&quot;,
-      &quot;proceeds&quot;: &quot;5000.00&quot;,
-      &quot;cost_basis&quot;: &quot;6000.00&quot;,
-      &quot;wash_sale_disallowed&quot;: &quot;200.00&quot;
-    }
-  ],
-  &quot;tax_year&quot;: 2025,
-  &quot;filing_status&quot;: &quot;single&quot;
-}</pre><strong>Python result</strong><pre>{
-  &quot;rule_id&quot;: &quot;schedule_d_2025&quot;,
-  &quot;tax_year&quot;: 2025,
-  &quot;filing_status&quot;: &quot;single&quot;,
-  &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
-  &quot;transaction_count&quot;: 2,
-  &quot;net_short_term&quot;: &quot;2000.00&quot;,
-  &quot;net_long_term&quot;: &quot;-800.00&quot;,
-  &quot;combined_net_capital_gain_loss&quot;: &quot;1200.00&quot;,
-  &quot;wash_sales_disallowed_total&quot;: &quot;200.00&quot;,
-  &quot;schedule_d_for_1040_line_7&quot;: &quot;1200.00&quot;,
-  &quot;capital_loss_carryover_reference&quot;: &quot;0&quot;,
-  &quot;review_note&quot;: &quot;Wash-sale adjustments present; verify Form 8949 codes and 30-day replacement periods.&quot;
-}</pre></details></dd><dt>Schedule E</dt><dd>Rental activity and partnership or S corporation K-1 inputs.<details class="result"><summary>Inspect synthetic example</summary><p>Follow rental income and the two K-1 records into the combined result.</p><strong>Inputs</strong><pre>{
-  &quot;tax_year&quot;: 2025,
-  &quot;rentals&quot;: [
-    {
-      &quot;property&quot;: &quot;123 Main&quot;,
-      &quot;rents_received&quot;: &quot;24000.00&quot;,
-      &quot;expenses&quot;: &quot;6000.00&quot;,
-      &quot;depreciation&quot;: &quot;4000.00&quot;
-    }
-  ],
-  &quot;k1_items&quot;: [
-    {
-      &quot;entity_form&quot;: &quot;1065&quot;,
-      &quot;entity_name&quot;: &quot;Alpha LP&quot;,
-      &quot;ordinary_income_loss&quot;: &quot;10000.00&quot;,
-      &quot;guaranteed_payments&quot;: &quot;2000.00&quot;
-    },
-    {
-      &quot;entity_form&quot;: &quot;1120-S&quot;,
-      &quot;entity_name&quot;: &quot;Beta Inc&quot;,
-      &quot;ordinary_income_loss&quot;: &quot;5000.00&quot;
-    }
-  ]
-}</pre><strong>Python result</strong><pre>{
-  &quot;rule_id&quot;: &quot;schedule_e_2025&quot;,
-  &quot;tax_year&quot;: 2025,
-  &quot;status&quot;: &quot;CALCULATED&quot;,
-  &quot;rental_net_income_loss&quot;: &quot;14000.00&quot;,
-  &quot;k1_net_income_loss&quot;: &quot;17000.00&quot;,
-  &quot;schedule_e_total_for_schedule_1_line_5&quot;: &quot;31000.00&quot;,
-  &quot;rentals&quot;: [
-    {
-      &quot;property&quot;: &quot;123 Main&quot;,
-      &quot;net_income_loss&quot;: &quot;14000.00&quot;
-    }
-  ],
-  &quot;k1_items&quot;: [
-    {
-      &quot;entity_name&quot;: &quot;Alpha LP&quot;,
-      &quot;entity_form&quot;: &quot;1065&quot;,
-      &quot;net_k1_income_loss&quot;: &quot;12000.00&quot;
-    },
-    {
-      &quot;entity_name&quot;: &quot;Beta Inc&quot;,
-      &quot;entity_form&quot;: &quot;1120-S&quot;,
-      &quot;net_k1_income_loss&quot;: &quot;5000.00&quot;
-    }
-  ],
-  &quot;review_reasons&quot;: [],
-  &quot;review_note&quot;: &quot;Reference workpaper only. Confirm QBI (§199A), basis, at-risk (Form 6198), and passive-activity (Form 8582) limitations.&quot;
-}</pre></details></dd><dt>Schedules C and SE</dt><dd>Net business income and self-employment tax screen.<details class="result"><summary>Inspect synthetic example</summary><p>See how receipts and expenses feed this self-employment workpaper.</p><strong>Inputs</strong><pre>{
-  &quot;tax_year&quot;: 2025,
-  &quot;filing_status&quot;: &quot;single&quot;,
-  &quot;gross_receipts&quot;: &quot;100000.00&quot;,
-  &quot;deductible_expenses&quot;: &quot;20000.00&quot;
-}</pre><strong>Python result</strong><pre>{
-  &quot;rule_id&quot;: &quot;schedule_se_2025&quot;,
-  &quot;tax_year&quot;: 2025,
-  &quot;filing_status&quot;: &quot;single&quot;,
-  &quot;status&quot;: &quot;CALCULATED&quot;,
-  &quot;schedule_c_net_profit&quot;: &quot;80000.00&quot;,
-  &quot;net_earnings_from_se&quot;: &quot;73880.000000&quot;,
-  &quot;ss_wage_base_reference&quot;: &quot;176100&quot;,
-  &quot;taxable_ss_se_earnings&quot;: &quot;73880.000000&quot;,
-  &quot;social_security_tax&quot;: &quot;9161.120000000&quot;,
-  &quot;medicare_tax&quot;: &quot;2142.520000000&quot;,
-  &quot;total_se_tax&quot;: &quot;11303.640000000&quot;,
-  &quot;deductible_half_se_tax_line_15&quot;: &quot;5651.8200000000&quot;,
-  &quot;additional_medicare_review_required&quot;: false,
-  &quot;review_note&quot;: &quot;Reference workpaper only. Verify 2025 Social Security wage base ($176,100) and Schedule C expense substantiation.&quot;
-}</pre></details></dd><dt>Form 8995</dt><dd>Simplified qualified business income screen.<details class="result"><summary>Inspect synthetic example</summary><p>The simplified screen refers this case for review.</p><strong>Inputs</strong><pre>{
-  &quot;tax_year&quot;: 2025,
-  &quot;filing_status&quot;: &quot;single&quot;,
-  &quot;qualified_business_income&quot;: &quot;100000.00&quot;,
-  &quot;taxable_income_before_qbi&quot;: &quot;200000.00&quot;
-}</pre><strong>Python result</strong><pre>{
-  &quot;rule_id&quot;: &quot;qbi_199a_2025&quot;,
-  &quot;tax_year&quot;: 2025,
-  &quot;filing_status&quot;: &quot;single&quot;,
-  &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
-  &quot;taxable_income_before_qbi&quot;: &quot;200000.00&quot;,
-  &quot;threshold_reference&quot;: &quot;197300&quot;,
-  &quot;qbi_deduction_line_13&quot;: null,
-  &quot;review_note&quot;: &quot;Taxable income exceeds 2025 simplified Form 8995 threshold; Form 8995-A W-2 wage/UBIA and SSTB testing required.&quot;
-}</pre></details></dd><dt>Tax, credits and payments</dt><dd>Ordinary income tax brackets, child tax credit, withholding, estimated payments and overpayment or balance owed.<details class="result"><summary>Inspect synthetic example</summary><p>The tax screen identifies missing AGI before producing a tax amount.</p><strong>Inputs</strong><pre>{
-  &quot;tax_year&quot;: 2025,
-  &quot;filing_status&quot;: &quot;single&quot;,
-  &quot;agi&quot;: &quot;&quot;,
-  &quot;deduction_taken&quot;: &quot;15000&quot;
-}</pre><strong>Python result</strong><pre>{
-  &quot;rule_id&quot;: &quot;form_1040_tax_and_credits_2025&quot;,
-  &quot;tax_year&quot;: 2025,
-  &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
-  &quot;missing_fields&quot;: [
-    &quot;agi&quot;
-  ],
-  &quot;review_note&quot;: &quot;Missing required input(s): agi.&quot;
-}</pre></details><details class="result"><summary>Inspect synthetic example</summary><p>Compare the tax control with payments in this separate refund example.</p><strong>Inputs</strong><pre>{
-  &quot;tax_year&quot;: 2025,
-  &quot;regular_tax_after_credits&quot;: &quot;5000.00&quot;,
-  &quot;self_employment_tax&quot;: &quot;1000.00&quot;,
-  &quot;w2_withholding_line_25a&quot;: &quot;5700.00&quot;,
-  &quot;form_1099_withholding_line_25b&quot;: &quot;650.00&quot;
-}</pre><strong>Python result</strong><pre>{
-  &quot;rule_id&quot;: &quot;form_1040_payments_and_refund_2025&quot;,
-  &quot;tax_year&quot;: 2025,
-  &quot;status&quot;: &quot;CALCULATED&quot;,
-  &quot;total_tax_line_24&quot;: &quot;6000.00&quot;,
-  &quot;total_withholding_line_25d&quot;: &quot;6350.00&quot;,
-  &quot;total_payments_line_33&quot;: &quot;6350.00&quot;,
-  &quot;overpayment_refund_line_34&quot;: &quot;350.00&quot;,
-  &quot;amount_you_owe_line_37&quot;: &quot;0&quot;,
-  &quot;form_2210_penalty_review_required&quot;: false,
-  &quot;review_note&quot;: &quot;Reference workpaper only. Verify estimated payment dates/confirmations and refundable credit eligibility.&quot;
-}</pre></details></dd><dt>Form 1040 assembler</dt><dd>Combines workpapers into a draft diagnostic summary and multi-sheet Excel export.<details class="result"><summary>Inspect synthetic example</summary><p>Diagnostics excerpt from the combined workpaper. Tax and refund figures are withheld while reference assumptions await review.</p><strong>Inputs</strong><pre>{
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#123a32"><link rel="icon" href="data:,"><title>Sovereign TaxFlow | Reviewer workpapers</title>
+<style>
+*{box-sizing:border-box}html{background:#f5f7f5;color:#172e28;font:100%/1.55 system-ui,-apple-system,sans-serif}body{margin:0}header{background:#123a32;color:white}header div,main,footer{max-width:62rem;margin:auto;padding:0 clamp(1rem,4vw,2.75rem)}header div{min-height:4rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}header span{font-weight:720;letter-spacing:-.02em}header small{color:#cbe5da}main{padding-top:clamp(1.5rem,4vw,3.5rem)}h1,h2{line-height:1.18;letter-spacing:-.035em;margin:0 0 .4em}h1{font:normal clamp(2.4rem,6vw,4.1rem)/1 Georgia,serif;margin-bottom:.25em}h2{font-size:clamp(1.5rem,3vw,2rem)}h3,h4,p{margin:.45rem 0 .85rem}h3{font-size:1.1rem}h4,button,input{font-size:1rem}p{max-width:65ch}small{font-size:.875rem}section{margin:0 0 1.2rem;background:white;border:1px solid #ccd8d1;border-radius:14px;padding:clamp(1rem,3.6vw,2.3rem)}.intro{margin:0 0 1.5rem;color:#405b50}.two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1.4rem,4vw,3rem)}.two>*{min-width:0}dl{margin:0}dl div{padding:.55rem 0;display:flex;justify-content:space-between;gap:1rem;border-bottom:1px solid #dfe6e2}dd{margin:0;font-variant-numeric:tabular-nums;font-weight:650}.total{font-weight:700}.actions,fieldset{display:flex;align-items:center;flex-wrap:wrap;gap:.55rem}fieldset{border:0;padding:0;margin:0 0 1rem}legend{padding:0 0 .5rem;font-weight:650}.choice{position:relative;display:inline-flex}.choice input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0}.choice span,.action{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:.55rem .9rem;border-radius:7px}.choice span{border:1px solid #879b90;font-variant-numeric:tabular-nums}.choice input:checked+span{background:#dcefe4;border:2px solid #21654d;padding:calc(.55rem - 1px) calc(.9rem - 1px)}a{color:#145a44}.action{border:1px solid #58816c;text-decoration:none;font-weight:620}.primary{background:#18583f;color:#fff;border-color:#18583f}.pill,.flag{font-size:.88rem;font-weight:730;display:inline-block;padding:.15rem .55rem;border-radius:4px;background:#daf1df;color:#174c2d}.flag,.fail{background:#fff0d9;color:#663a04}.result{margin:1rem 0}.result p{margin:.3rem 0}.case,.directory{border-top:1px solid #d9e3dc}summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:.75rem;min-height:52px;padding:.8rem .1rem}summary::-webkit-details-marker{display:none}summary:after{content:'+';font-size:1.25rem;color:#37644d;margin-left:auto}details[open]>summary:after{content:'−'}summary span{flex:1;min-width:0}summary small,summary strong{display:block}summary small{color:#486153}summary b{color:#375947;white-space:nowrap;font-variant-numeric:tabular-nums}.inside{padding:.2rem .15rem 1rem}.inside article+article{border-top:1px solid #ccd8d1;padding-top:.6rem}pre{font: .95rem/1.55 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f5f2;padding:.8rem;border-radius:6px;margin:.3rem 0 1rem}.actions{margin-top:.8rem}footer{padding-top:.3rem;padding-bottom:2rem}footer a{display:inline-flex;align-items:center;min-height:44px}a:focus-visible,summary:focus-visible,.choice input:focus-visible+span{outline:3px solid #a66313;outline-offset:3px}[hidden]{display:none!important}@media(max-width:660px){.two{grid-template-columns:1fr}summary{gap:.55rem}header small{font-size:.875rem}}
+</style></head><body><header><div><span>Sovereign TaxFlow</span><small>Reviewer workpapers</small></div></header><main><h1>Workpaper review</h1><p class="intro">Follow the figures, inspect an exception, and download the evidence. All examples use synthetic records.</p>
+<section id="ledger"><h2>Ledger tie-out</h2><p>Choose the expected closing balance to test the two-entry ledger.</p><div class="two"><dl><div><dt>Opening balance</dt><dd>$1,000.00</dd></div><div><dt>Jan 1 · Credit</dt><dd>+$300.00</dd></div><div><dt>Jan 2 · Debit</dt><dd>−$50.00</dd></div><div class="total"><dt>Calculated closing</dt><dd>$1,250.00</dd></div></dl><div><fieldset><legend>Expected closing balance</legend><label class="choice"><input type="radio" name="closing" value="125000" checked><span>$1,250.00</span></label><label class="choice"><input type="radio" name="closing" value="125100"><span>$1,251.00</span></label></fieldset><div class="result" role="status"><strong id="status" class="pill">PASS</strong><p id="variance">Variance $0.00 · Tolerance $0.01</p></div><a class="action primary" id="xlsx" hidden download="TaxFlow-ledger-PASS.xlsx">Download ledger (.xlsx)</a></div></div></section>
+<section id="exceptions"><h2>Exception inspector</h2><p>Open a 2025 exception to compare the source and control and read the reviewer’s follow-up question.</p><details class="case"><summary><span><small>Form 1040 · W-2</small><strong>Withholding difference</strong></span><b>$200.00</b></summary><div class="inside"><span class="flag">REVIEW_REQUIRED</span><p>W-2 A $4,500 + W-2 B $1,200 = $5,700 Draft Form 1040 line 25a shows $5,500.</p><h3>Draft reviewer question</h3><p>Which W-2 entry or draft withholding amount accounts for the $200 difference?</p></div></details><details class="case"><summary><span><small>Payroll · 941 / W-3</small><strong>Annual withholding difference</strong></span><b>$500.00</b></summary><div class="inside"><span class="flag">REVIEW_REQUIRED</span><p>Four quarterly Forms 941 total $12,000 withheld. The annual W-3 control shows $11,500.</p><h3>Draft reviewer question</h3><p>Which quarter, amendment or annual control entry explains the $500 difference?</p></div></details><details class="case"><summary><span><small>Form 1065 · K-1</small><strong>Unallocated profit percentage</strong></span><b>10 points</b></summary><div class="inside"><span class="flag">REVIEW_REQUIRED</span><p>Two partners have 60% and 30%, totaling 90%. Expected allocation is 100%. At $10,000 of ordinary income, $1,000 remains unallocated.</p><h3>Draft reviewer question</h3><p>Which ownership record or allocation entry resolves the missing 10 percentage points?</p></div></details><div class="actions"><a class="action" id="pdf" download="TaxFlow-exceptions.pdf">Review notes (.pdf)</a><a class="action" id="json" download="TaxFlow-exceptions.json">Exception data (.json)</a></div></section>
+<section id="directory"><h2>Workpaper directory</h2><p>Open a return family to inspect each example’s inputs and saved output.</p><details class="directory"><summary><strong>Individual · 1040</strong></summary><div class="inside"><article><h3>Form 1040</h3><h4>Synthetic inputs</h4><pre>{
   &quot;filing_status&quot;: &quot;single&quot;,
   &quot;w2_wages&quot;: &quot;50000.00&quot;,
   &quot;w2_withholding&quot;: &quot;5000.00&quot;,
@@ -534,7 +38,7 @@ worker.onmessage=({data})=>{if(data.id!==version)return;if(data.error){out.hidde
       &quot;expenses&quot;: &quot;12000.00&quot;
     }
   ]
-}</pre><strong>Python result</strong><pre>{
+}</pre><h4>Saved workpaper output</h4><pre>{
   &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
   &quot;diagnostics&quot;: [
     {
@@ -553,7 +57,7 @@ worker.onmessage=({data})=>{if(data.id!==version)return;if(data.error){out.hidde
       &quot;message&quot;: &quot;Amount owed is $1,000+ and timely payments are below 90% of total tax; review Form 2210 prior-year safe harbor.&quot;
     }
   ]
-}</pre></details></dd></dl></details><details class="group"><summary>2025 business and other entities</summary><dl><dt>Form 1120</dt><dd>Corporate income and illustrative tax.<details class="result"><summary>Inspect synthetic example</summary><p>Follow receipts and expenses into the preliminary corporate workpaper.</p><strong>Inputs</strong><pre>{
+}</pre></article></div></details><details class="directory"><summary><strong>Business · 1120 / 1065 / 1120-S</strong></summary><div class="inside"><article><h3>Form 1120</h3><h4>Synthetic inputs</h4><pre>{
   &quot;entity_form&quot;: &quot;1120&quot;,
   &quot;tax_year&quot;: 2025,
   &quot;gross_receipts&quot;: &quot;500000.00&quot;,
@@ -566,7 +70,7 @@ worker.onmessage=({data})=>{if(data.id!==version)return;if(data.error){out.hidde
     }
   ],
   &quot;total_assets&quot;: &quot;1000000.00&quot;
-}</pre><strong>Python result</strong><pre>{
+}</pre><h4>Saved workpaper output</h4><pre>{
   &quot;rule_id&quot;: &quot;business_1120_1065_2025&quot;,
   &quot;entity_form&quot;: &quot;1120&quot;,
   &quot;tax_year&quot;: 2025,
@@ -585,54 +89,58 @@ worker.onmessage=({data})=>{if(data.id!==version)return;if(data.error){out.hidde
   &quot;status&quot;: &quot;CALCULATED&quot;,
   &quot;review_reasons&quot;: [],
   &quot;review_note&quot;: &quot;Reference business workpaper only. Verify NOLs, §163(j), officer compensation, basis, and Schedule M-1/M-3.&quot;
-}</pre></details></dd><dt>Form 1065</dt><dd>Partner allocation percentages and K-1 reconciliation.<details class="result"><summary>Inspect synthetic example</summary><p>Two partner shares total 90%. The allocation needs reviewer attention.</p><strong>Inputs</strong><pre>{
+}</pre></article><article><h3>Form 1065</h3><h4>Synthetic inputs</h4><pre>{
   &quot;entity_form&quot;: &quot;1065&quot;,
   &quot;tax_year&quot;: 2025,
-  &quot;gross_receipts&quot;: &quot;100000.00&quot;,
-  &quot;operating_expenses&quot;: &quot;20000.00&quot;,
+  &quot;gross_receipts&quot;: &quot;10000&quot;,
+  &quot;cogs&quot;: &quot;0&quot;,
+  &quot;operating_expenses&quot;: &quot;0&quot;,
+  &quot;book_to_tax_items&quot;: [],
+  &quot;total_assets&quot;: &quot;0&quot;,
+  &quot;reportable_partner_50pct&quot;: false,
   &quot;partner_allocations&quot;: [
     {
-      &quot;partner&quot;: &quot;Partner A&quot;,
+      &quot;partner&quot;: &quot;Synthetic A&quot;,
       &quot;profit_pct&quot;: &quot;60&quot;
     },
     {
-      &quot;partner&quot;: &quot;Partner B&quot;,
+      &quot;partner&quot;: &quot;Synthetic B&quot;,
       &quot;profit_pct&quot;: &quot;30&quot;
     }
   ]
-}</pre><strong>Python result</strong><pre>{
-  &quot;rule_id&quot;: &quot;business_1120_1065_2025&quot;,
+}</pre><h4>Saved workpaper output</h4><pre>{
+  &quot;book_net_income&quot;: &quot;10000&quot;,
   &quot;entity_form&quot;: &quot;1065&quot;,
-  &quot;tax_year&quot;: 2025,
-  &quot;book_net_income&quot;: &quot;80000.00&quot;,
-  &quot;quantified_book_to_tax_net&quot;: &quot;0&quot;,
-  &quot;unresolved_book_to_tax_amount&quot;: &quot;0&quot;,
-  &quot;preliminary_taxable_or_ordinary_income&quot;: &quot;80000.00&quot;,
   &quot;m3_flags&quot;: {
-    &quot;schedule_m3_required_preliminary&quot;: false,
+    &quot;review_note&quot;: &quot;Screening flag only. Apply current form-specific instructions and partnership adjusted-asset, receipt and reportable-entity-partner tests.&quot;,
     &quot;schedule_m3_full_parts_ii_iii_threshold&quot;: false,
+    &quot;schedule_m3_required_preliminary&quot;: false,
     &quot;total_assets&quot;: &quot;0&quot;,
-    &quot;total_receipts&quot;: &quot;100000.00&quot;,
-    &quot;review_note&quot;: &quot;Screening flag only. Apply current form-specific instructions and partnership adjusted-asset, receipt and reportable-entity-partner tests.&quot;
+    &quot;total_receipts&quot;: &quot;10000&quot;
   },
   &quot;partner_k1_allocations&quot;: [
     {
-      &quot;partner&quot;: &quot;Partner A&quot;,
-      &quot;profit_pct&quot;: &quot;60&quot;,
-      &quot;ordinary_share&quot;: &quot;48000.000&quot;
+      &quot;ordinary_share&quot;: &quot;6000.0&quot;,
+      &quot;partner&quot;: &quot;Synthetic A&quot;,
+      &quot;profit_pct&quot;: &quot;60&quot;
     },
     {
-      &quot;partner&quot;: &quot;Partner B&quot;,
-      &quot;profit_pct&quot;: &quot;30&quot;,
-      &quot;ordinary_share&quot;: &quot;24000.000&quot;
+      &quot;ordinary_share&quot;: &quot;3000.0&quot;,
+      &quot;partner&quot;: &quot;Synthetic B&quot;,
+      &quot;profit_pct&quot;: &quot;30&quot;
     }
   ],
-  &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
+  &quot;preliminary_taxable_or_ordinary_income&quot;: &quot;10000&quot;,
+  &quot;quantified_book_to_tax_net&quot;: &quot;0&quot;,
+  &quot;review_note&quot;: &quot;Reference business workpaper only. Verify NOLs, §163(j), officer compensation, basis, and Schedule M-1/M-3.&quot;,
   &quot;review_reasons&quot;: [
     &quot;Partner profit_pct sum is 90%, expected 100%.&quot;
   ],
-  &quot;review_note&quot;: &quot;Reference business workpaper only. Verify NOLs, §163(j), officer compensation, basis, and Schedule M-1/M-3.&quot;
-}</pre></details></dd><dt>Form 1120-S and Form 7203</dt><dd>S corporation income, compensation and shareholder stock basis screen.<details class="result"><summary>Inspect synthetic example</summary><p>Inspect the illustrative shareholder basis roll-forward.</p><strong>Inputs</strong><pre>{
+  &quot;rule_id&quot;: &quot;business_1120_1065_2025&quot;,
+  &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
+  &quot;tax_year&quot;: 2025,
+  &quot;unresolved_book_to_tax_amount&quot;: &quot;0&quot;
+}</pre></article><article><h3>Form 1120-S</h3><h4>Synthetic inputs</h4><pre>{
   &quot;tax_year&quot;: 2025,
   &quot;gross_receipts&quot;: &quot;300000.00&quot;,
   &quot;officer_compensation&quot;: &quot;80000.00&quot;,
@@ -645,7 +153,7 @@ worker.onmessage=({data})=>{if(data.id!==version)return;if(data.error){out.hidde
       &quot;distributions&quot;: &quot;50000.00&quot;
     }
   ]
-}</pre><strong>Python result</strong><pre>{
+}</pre><h4>Saved workpaper output</h4><pre>{
   &quot;rule_id&quot;: &quot;scorp_1120s_2025&quot;,
   &quot;tax_year&quot;: 2025,
   &quot;status&quot;: &quot;CALCULATED&quot;,
@@ -671,7 +179,80 @@ worker.onmessage=({data})=>{if(data.id!==version)return;if(data.error){out.hidde
   ],
   &quot;review_reasons&quot;: [],
   &quot;review_note&quot;: &quot;Reference Form 1120-S / Form 7203 workpaper only. Verify debt basis, AAA/AE&amp;P, and §1366 ordering.&quot;
-}</pre></details></dd><dt>Form 1041</dt><dd>Fiduciary income, distributions and investment income review.<details class="result"><summary>Inspect synthetic example</summary><p>Inspect the draft distribution deduction and the open investment income review.</p><strong>Inputs</strong><pre>{
+}</pre></article></div></details><details class="directory"><summary><strong>Payroll · 941</strong></summary><div class="inside"><article><h3>Form 941</h3><h4>Synthetic inputs</h4><pre>{
+  &quot;quarterly_941s&quot;: [
+    {
+      &quot;quarter&quot;: &quot;Q1&quot;,
+      &quot;wages_line_2&quot;: &quot;25000&quot;,
+      &quot;fed_withholding_line_3&quot;: &quot;3000&quot;,
+      &quot;ss_wages_line_5a&quot;: &quot;25000&quot;,
+      &quot;medicare_wages_line_5c&quot;: &quot;25000&quot;
+    },
+    {
+      &quot;quarter&quot;: &quot;Q2&quot;,
+      &quot;wages_line_2&quot;: &quot;25000&quot;,
+      &quot;fed_withholding_line_3&quot;: &quot;3000&quot;,
+      &quot;ss_wages_line_5a&quot;: &quot;25000&quot;,
+      &quot;medicare_wages_line_5c&quot;: &quot;25000&quot;
+    },
+    {
+      &quot;quarter&quot;: &quot;Q3&quot;,
+      &quot;wages_line_2&quot;: &quot;25000&quot;,
+      &quot;fed_withholding_line_3&quot;: &quot;3000&quot;,
+      &quot;ss_wages_line_5a&quot;: &quot;25000&quot;,
+      &quot;medicare_wages_line_5c&quot;: &quot;25000&quot;
+    },
+    {
+      &quot;quarter&quot;: &quot;Q4&quot;,
+      &quot;wages_line_2&quot;: &quot;25000&quot;,
+      &quot;fed_withholding_line_3&quot;: &quot;3000&quot;,
+      &quot;ss_wages_line_5a&quot;: &quot;25000&quot;,
+      &quot;medicare_wages_line_5c&quot;: &quot;25000&quot;
+    }
+  ],
+  &quot;annual_w3_totals&quot;: {
+    &quot;box_1_wages&quot;: &quot;100000&quot;,
+    &quot;box_2_withholding&quot;: &quot;11500&quot;,
+    &quot;box_3_ss_wages&quot;: &quot;100000&quot;,
+    &quot;box_5_medicare_wages&quot;: &quot;100000&quot;
+  },
+  &quot;tax_year&quot;: 2025
+}</pre><h4>Saved workpaper output</h4><pre>{
+  &quot;checks&quot;: [
+    {
+      &quot;difference&quot;: &quot;0&quot;,
+      &quot;field&quot;: &quot;wages_box_1_vs_941_line_2&quot;,
+      &quot;status&quot;: &quot;MATCH&quot;,
+      &quot;total_941&quot;: &quot;100000&quot;,
+      &quot;total_w3&quot;: &quot;100000&quot;
+    },
+    {
+      &quot;difference&quot;: &quot;500&quot;,
+      &quot;field&quot;: &quot;withholding_box_2_vs_941_line_3&quot;,
+      &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
+      &quot;total_941&quot;: &quot;12000&quot;,
+      &quot;total_w3&quot;: &quot;11500&quot;
+    },
+    {
+      &quot;difference&quot;: &quot;0&quot;,
+      &quot;field&quot;: &quot;ss_wages_box_3_vs_941_line_5a&quot;,
+      &quot;status&quot;: &quot;MATCH&quot;,
+      &quot;total_941&quot;: &quot;100000&quot;,
+      &quot;total_w3&quot;: &quot;100000&quot;
+    },
+    {
+      &quot;difference&quot;: &quot;0&quot;,
+      &quot;field&quot;: &quot;medicare_wages_box_5_vs_941_line_5c&quot;,
+      &quot;status&quot;: &quot;MATCH&quot;,
+      &quot;total_941&quot;: &quot;100000&quot;,
+      &quot;total_w3&quot;: &quot;100000&quot;
+    }
+  ],
+  &quot;review_note&quot;: &quot;Payroll workpaper tie-out only. Verify Form 941-X amendments, third-party sick pay, and §125/401(k) pre-tax items.&quot;,
+  &quot;rule_id&quot;: &quot;payroll_941_tieout_2025&quot;,
+  &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
+  &quot;tax_year&quot;: 2025
+}</pre></article></div></details><details class="directory"><summary><strong>Fiduciary and exempt · 1041 / 990</strong></summary><div class="inside"><article><h3>Form 1041</h3><h4>Synthetic inputs</h4><pre>{
   &quot;entity_type&quot;: &quot;complex_trust&quot;,
   &quot;tax_year&quot;: 2025,
   &quot;interest_and_dividends&quot;: &quot;20000.00&quot;,
@@ -679,7 +260,7 @@ worker.onmessage=({data})=>{if(data.id!==version)return;if(data.error){out.hidde
   &quot;fiduciary_and_professional_fees&quot;: &quot;2000.00&quot;,
   &quot;distributions_to_beneficiaries&quot;: &quot;15000.00&quot;,
   &quot;capital_gains_allocated_to_corpus&quot;: true
-}</pre><strong>Python result</strong><pre>{
+}</pre><h4>Saved workpaper output</h4><pre>{
   &quot;rule_id&quot;: &quot;fiduciary_1041_2025&quot;,
   &quot;entity_type&quot;: &quot;complex_trust&quot;,
   &quot;tax_year&quot;: 2025,
@@ -693,14 +274,14 @@ worker.onmessage=({data})=>{if(data.id!==version)return;if(data.error){out.hidde
   &quot;illustrative_bracket_tax&quot;: &quot;2814.5000&quot;,
   &quot;form_8960_niit_review_required&quot;: true,
   &quot;review_note&quot;: &quot;Adjusted total income exceeds 2025 top trust bracket ($15,650); review Form 8960 Net Investment Income Tax (3.8%) and Schedule K-1 allocations.&quot;
-}</pre></details></dd><dt>Forms 990, 990-EZ, 990-N and 990-T</dt><dd>Exempt organization filing-tier and unrelated business income screens.<details class="result"><summary>Inspect synthetic example</summary><p>See the filing-tier reference output for the synthetic organization.</p><strong>Inputs</strong><pre>{
+}</pre></article><article><h3>Form 990</h3><h4>Synthetic inputs</h4><pre>{
   &quot;tax_year&quot;: 2025,
   &quot;contributions_and_grants&quot;: &quot;120000.00&quot;,
   &quot;program_service_revenue&quot;: &quot;30000.00&quot;,
   &quot;program_service_expenses&quot;: &quot;80000.00&quot;,
   &quot;management_and_general_expenses&quot;: &quot;20000.00&quot;,
   &quot;total_end_of_year_assets&quot;: &quot;250000.00&quot;
-}</pre><strong>Python result</strong><pre>{
+}</pre><h4>Saved workpaper output</h4><pre>{
   &quot;rule_id&quot;: &quot;exempt_990_2025&quot;,
   &quot;tax_year&quot;: 2025,
   &quot;status&quot;: &quot;CALCULATED&quot;,
@@ -712,59 +293,27 @@ worker.onmessage=({data})=>{if(data.id!==version)return;if(data.error){out.hidde
   &quot;suggested_form_tier_reference&quot;: &quot;990-EZ&quot;,
   &quot;form_990t_ubit_review_required&quot;: false,
   &quot;review_note&quot;: &quot;Reference Form 990 screen only. Verify 3-year gross-receipts average for 990-N, Schedule A public support, and governance disclosures.&quot;
-}</pre></details><details class="result"><summary>Inspect synthetic example</summary><p>Review the separate unrelated-business-income flag.</p><strong>Inputs</strong><pre>{
-  &quot;tax_year&quot;: 2025,
-  &quot;contributions_and_grants&quot;: &quot;250000.00&quot;,
-  &quot;unrelated_business_gross_income&quot;: &quot;1500.00&quot;
-}</pre><strong>Python result</strong><pre>{
-  &quot;rule_id&quot;: &quot;exempt_990_2025&quot;,
-  &quot;tax_year&quot;: 2025,
-  &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
-  &quot;total_revenue&quot;: &quot;250000.00&quot;,
-  &quot;total_functional_expenses&quot;: &quot;0&quot;,
-  &quot;revenue_less_expenses&quot;: &quot;250000.00&quot;,
-  &quot;program_expense_ratio_pct&quot;: &quot;0.00&quot;,
-  &quot;total_end_of_year_assets&quot;: &quot;0&quot;,
-  &quot;suggested_form_tier_reference&quot;: &quot;990&quot;,
-  &quot;form_990t_ubit_review_required&quot;: true,
-  &quot;review_note&quot;: &quot;Unrelated business gross income &gt;= $1,000; Form 990-T filing and expense allocation review required.&quot;
-}</pre></details></dd></dl></details><details class="group"><summary>Review workflow</summary><dl><dt>Session review queue</dt><dd>Tracks preparer, reviewer, evidence, discrepancies and sign-off for three checks. Manually entered names and session-only history.<details class="result"><summary>Inspect synthetic example</summary><p>Recorded from a synthetic session. This public page displays the outcome of the sign-off test.</p><strong>Inputs</strong><pre>{
-  &quot;ledger&quot;: &quot;Bundled synthetic sample&quot;,
-  &quot;actions&quot;: [
-    &quot;Run&quot;,
-    &quot;Sign off&quot;,
-    &quot;Generate a new workpaper with the same inputs&quot;
-  ]
-}</pre><strong>Python result</strong><pre>{
-  &quot;demo_signoff_recorded&quot;: true,
-  &quot;new_workpaper_requires_fresh_signoff&quot;: true
-}</pre></details></dd><dt>M-3 and depreciation review</dt><dd>Partnership threshold inputs and unknown asset facts remain CPA review items.<details class="result"><summary>Inspect synthetic example</summary><p>Preliminary partnership screen with an explicit asset amount. Unknown-fact handling remains under review.</p><strong>Inputs</strong><pre>{
-  &quot;entity&quot;: &quot;1065&quot;,
-  &quot;total_assets&quot;: &quot;15000000&quot;,
-  &quot;receipts&quot;: &quot;0&quot;
-}</pre><strong>Python result</strong><pre>{
-  &quot;schedule_m3_required_preliminary&quot;: true,
-  &quot;schedule_m3_full_parts_ii_iii_threshold&quot;: false,
-  &quot;total_assets&quot;: &quot;15000000&quot;,
-  &quot;total_receipts&quot;: &quot;0&quot;,
-  &quot;review_note&quot;: &quot;Screening flag only. Apply current form-specific instructions and partnership adjusted-asset, receipt and reportable-entity-partner tests.&quot;
-}</pre></details></dd><dt>2025 template kit</dt><dd>Merchant cleanup workbook and an asset evidence checklist. Available by request through the <a href="#pilot">pilot walkthrough</a>.</dd></dl></details><details class="group"><summary>Separate prototypes and earlier projects</summary><dl><dt>2025 Schedule 1, line 21</dt><dd>Student-loan interest worksheet and referral cases.<details class="result"><summary>Inspect synthetic example</summary><p>Separate student-loan prototype. This case requests a worksheet before quantifying the deduction.</p><strong>Inputs</strong><pre>{
-  &quot;year&quot;: 2025,
-  &quot;filing_status&quot;: &quot;MFJ&quot;,
-  &quot;qualified_interest&quot;: &quot;2750&quot;,
-  &quot;worksheet_magi&quot;: &quot;185000&quot;,
-  &quot;eligibility_confirmed&quot;: true,
-  &quot;special_worksheet_required&quot;: true
-}</pre><strong>Python result</strong><pre>{
-  &quot;year&quot;: 2025,
-  &quot;filing_status&quot;: &quot;MFJ&quot;,
-  &quot;schedule_1_line&quot;: 21,
-  &quot;qualified_interest&quot;: &quot;2750&quot;,
-  &quot;worksheet_magi&quot;: &quot;185000&quot;,
-  &quot;eligibility_confirmed&quot;: true,
-  &quot;special_worksheet_required&quot;: true,
-  &quot;status&quot;: &quot;REVIEW_REQUIRED&quot;,
-  &quot;deduction_usd&quot;: null,
-  &quot;cpa_signoff&quot;: &quot;PENDING&quot;,
-  &quot;reason&quot;: &quot;Use the Publication 970 special worksheet.&quot;
-}</pre></details></dd><dt>Batch workpaper review</dt><dd>1040, 1120 and 1065 discrepancy checks, a Title 26 XML index and optional local Ollama drafting. <em>Isolated prototype. No public runner or source-data intake is available here.</em></dd><dt>Notebook prototypes</dt><dd>PDF workpaper generation, bank statement extraction, Schedule C and India section 44ADA exploration. <em>Historical notebook projects. No notebook executes on this page.</em></dd><dt>Earlier automation work</dt><dd>GAAP and estate validation sketches, TaxAssist, Sovereign OS and outreach automation. Historical projects outside the product release. <em>Historical portfolio. <a href="https://github.com/anilkanth98488-beep/sovereign-open-initiative/blob/Core/docs/PROJECT_INVENTORY.md">Open the public project inventory</a>.</em></dd></dl></details></section><section id="packet"><h2>Download a synthetic review packet</h2><p>The ledger ties at $1,250. Two partner allocations total 90%, and four quarters of payroll withholding exceed the annual control by $500. Open the Excel workpaper, PDF summary, Word review memo and JSON audit manifest to trace each outcome to its source fingerprint. The sign-off lines are blank.</p><a class="button" href="taxflow-synthetic-review.zip" download>Download the draft packet (.zip)</a></section><section id="pilot"><h2>One ledger. One reviewer walkthrough.</h2><p>Deva Anil Kanth prepares one Excel tie-out and one exception list in your firm’s preferred format. Start with a blank layout or invented records. Agree on the scope, fee and acceptance criteria before the pilot.</p><a href="https://github.com/anilkanth98488-beep/sovereign-open-initiative/issues/new?title=Synthetic%20workpaper%20walkthrough&amp;body=I%20would%20like%20a%20three-minute%20synthetic%20demo.">Request a synthetic walkthrough on GitHub ↗</a><p><small>GitHub requests are public. Keep names of clients, contact details and financial records out of the request. If Deva emailed you this demo, you can reply privately to that email.</small></p></section></main><footer><span>Synthetic workpapers · CPA review pending</span><a href="https://github.com/anilkanth98488-beep/sovereign-open-initiative/tree/Core">Public project ↗</a></footer></html>
+}</pre></article></div></details></section>
+<section id="pilot"><h2>Fixed-fee workpaper pilot</h2><p>Bring a blank layout or an invented ledger. Deva Anil Kanth will agree the fee and scope with you for one Excel tie-out and one reviewer exception list.</p><a class="action primary" id="contact" href="https://github.com/anilkanth98488-beep/sovereign-open-initiative/issues/new?title=Synthetic%20workpaper%20walkthrough&amp;body=I%20would%20like%20a%20three-minute%20synthetic%20demo.">Request a walkthrough on GitHub</a><p><small>GitHub sign-in required. Requests are public. Use synthetic details only.</small></p></section></main><footer><a href="workpaper-lab.html#ecosystem">Explore the separate prototype lab</a><p><small>Synthetic workpapers · CPA and security reviews pending.</small></p></footer>
+<script>
+'use strict';
+const payload={"xlsx": "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", "pdf": "JVBERi0xLjMKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GMSAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL0NvbnRlbnRzIDcgMCBSIC9NZWRpYUJveCBbIDAgMCA1OTUgODQyIF0gL1BhcmVudCA2IDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago0IDAgb2JqCjw8Ci9QYWdlTW9kZSAvVXNlTm9uZSAvUGFnZXMgNiAwIFIgL1R5cGUgL0NhdGFsb2cKPj4KZW5kb2JqCjUgMCBvYmoKPDwKL0F1dGhvciAoYW5vbnltb3VzKSAvQ3JlYXRpb25EYXRlIChEOjIwMjYxMTE5MTkzNzI3KzA1JzAwJykgL0NyZWF0b3IgKGFub255bW91cykgL0tleXdvcmRzICgpIC9Nb2REYXRlIChEOjIwMjYxMTE5MTkzNzI3KzA1JzAwJykgL1Byb2R1Y2VyIChSZXBvcnRMYWIgUERGIExpYnJhcnkgLSBcKG9wZW5zb3VyY2VcKSkgCiAgL1N1YmplY3QgKHVuc3BlY2lmaWVkKSAvVGl0bGUgKFN5bnRoZXRpYyBleGNlcHRpb24gcmV2aWV3KSAvVHJhcHBlZCAvRmFsc2UKPj4KZW5kb2JqCjYgMCBvYmoKPDwKL0NvdW50IDEgL0tpZHMgWyAzIDAgUiBdIC9UeXBlIC9QYWdlcwo+PgplbmRvYmoKNyAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCA3MzUKPj4Kc3RyZWFtCkdhdG4jPyNRMmQoa3FHVS8pSDFQZyc6PmghYmxzODlzJ2pUZVRUPk9DcVo+aWs9dEdWQ2hCMWpXQlloYmBfaiQ3WjNnVnFKXSUiPE8zTjcnXzhCOFIhIlQ3Z2JXNS8sTUE+VnNQWDRnU0IjVzs/Uzs2WSktcDxSXS4kNzZfRnVrQVBKcDYsPigqMEVfSk84X2RnQCFmYm5KZD5yNGQ3OmE7VGRFLVJZMSxWSDZpVWQmbzRcUCFKYW01KFssSiVtUEM8LjFAJD9AJVJhU2FdK3FvbEBOI3NYSURcKV5GNmI9Ni83V1ckMEBxWWNfQjxFK2ApcHBvUEYtYHVFWSFkUmFWZl9sNjFiMF40PFtsJiJHOGhJXWdPdUtuYFtwNl9vXThkInNNNHAxbzkiY1haSEUnZTZiQ19aQyhUPFJfQVcmYmVGJSM+MEomYmxfSDdmO1RVW2YqSz43SllSWnU4cStnYWtab1NtUy5fQERWS1R0bDtKSkdqZU9HKmFEV0UoTU5mTFlxcWhaYD5sNlFZIS8oJ2VLWy01dTstKmdkZVI5XVZOcE9cXyIlRCZpSywjajlWIjZnMV1bNU9kNTM5bSEwO1VJZzVfOmJWXF5SKV03OWIiaWtcK2pubE9aa1U6KjdsaVdFJSQqTiEpYSYuYU5ecTs8K1Y4PDtUW1VCPzcvJzQ3KkMlJztbODxhYnByTkshTykzT0JPKTRDNUlQSnMkTkEmblJmXGQwUVdzSVlfNSl1SywvQ11vPDYuXEBOW1JeTjMuPlQ6L2ZlRFktQmMidTYpdHJfUU1xdVlPMitpcCYmNmA5ZV9ARV5lRV9pRUttZzBJPihwa2YuSl8kYGxmVGhULV9QSCMkZy4pWFI6cjo0PyVENzVATjRmWm5qNjhRc0cxVklNV2daVVJuZkxDYDlzZ1w6QDpTc0c0LFBOPDFpOTEuSUhWcmkra0BMIjRAXWFdclc2UyZraz5+PmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDgKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDYxIDAwMDAwIG4gCjAwMDAwMDAwOTIgMDAwMDAgbiAKMDAwMDAwMDE5OSAwMDAwMCBuIAowMDAwMDAwMzkyIDAwMDAwIG4gCjAwMDAwMDA0NjAgMDAwMDAgbiAKMDAwMDAwMDczOSAwMDAwMCBuIAowMDAwMDAwNzk4IDAwMDAwIG4gCnRyYWlsZXIKPDwKL0lEIApbPDhjMzk0YWRkOTBkNmUyNTQ3ZmMzZjkwNTY4M2E5ZjRmPjw4YzM5NGFkZDkwZDZlMjU0N2ZjM2Y5MDU2ODNhOWY0Zj5dCiUgUmVwb3J0TGFiIGdlbmVyYXRlZCBQREYgZG9jdW1lbnQgLS0gZGlnZXN0IChvcGVuc291cmNlKQoKL0luZm8gNSAwIFIKL1Jvb3QgNCAwIFIKL1NpemUgOAo+PgpzdGFydHhyZWYKMTYyMwolJUVPRgo=", "json": "ewogICJ0YXhfeWVhciI6IDIwMjUsCiAgInN5bnRoZXRpYyI6IHRydWUsCiAgInJldmlld2VyX2FwcHJvdmFsIjogIlBFTkRJTkciLAogICJleGNlcHRpb25zIjogWwogICAgewogICAgICAiZm9ybSI6ICJGb3JtIDEwNDAgXHUwMGI3IFctMiIsCiAgICAgICJtZXRyaWMiOiAiJDIwMC4wMCIsCiAgICAgICJ0aXRsZSI6ICJXaXRoaG9sZGluZyBkaWZmZXJlbmNlIiwKICAgICAgInNvdXJjZSI6ICJXLTIgQSAkNCw1MDAgKyBXLTIgQiAkMSwyMDAgPSAkNSw3MDAiLAogICAgICAiY29udHJvbCI6ICJEcmFmdCBGb3JtIDEwNDAgbGluZSAyNWEgc2hvd3MgJDUsNTAwLiIsCiAgICAgICJxdWVzdGlvbiI6ICJXaGljaCBXLTIgZW50cnkgb3IgZHJhZnQgd2l0aGhvbGRpbmcgYW1vdW50IGFjY291bnRzIGZvciB0aGUgJDIwMCBkaWZmZXJlbmNlPyIsCiAgICAgICJzdGF0dXMiOiAiUkVWSUVXX1JFUVVJUkVEIgogICAgfSwKICAgIHsKICAgICAgImZvcm0iOiAiUGF5cm9sbCBcdTAwYjcgOTQxIC8gVy0zIiwKICAgICAgIm1ldHJpYyI6ICIkNTAwLjAwIiwKICAgICAgInRpdGxlIjogIkFubnVhbCB3aXRoaG9sZGluZyBkaWZmZXJlbmNlIiwKICAgICAgInNvdXJjZSI6ICJGb3VyIHF1YXJ0ZXJseSBGb3JtcyA5NDEgdG90YWwgJDEyLDAwMCB3aXRoaGVsZC4iLAogICAgICAiY29udHJvbCI6ICJUaGUgYW5udWFsIFctMyBjb250cm9sIHNob3dzICQxMSw1MDAuIiwKICAgICAgInF1ZXN0aW9uIjogIldoaWNoIHF1YXJ0ZXIsIGFtZW5kbWVudCBvciBhbm51YWwgY29udHJvbCBlbnRyeSBleHBsYWlucyB0aGUgJDUwMCBkaWZmZXJlbmNlPyIsCiAgICAgICJzdGF0dXMiOiAiUkVWSUVXX1JFUVVJUkVEIgogICAgfSwKICAgIHsKICAgICAgImZvcm0iOiAiRm9ybSAxMDY1IFx1MDBiNyBLLTEiLAogICAgICAibWV0cmljIjogIjEwIHBvaW50cyIsCiAgICAgICJ0aXRsZSI6ICJVbmFsbG9jYXRlZCBwcm9maXQgcGVyY2VudGFnZSIsCiAgICAgICJzb3VyY2UiOiAiVHdvIHBhcnRuZXJzIGhhdmUgNjAlIGFuZCAzMCUsIHRvdGFsaW5nIDkwJS4iLAogICAgICAiY29udHJvbCI6ICJFeHBlY3RlZCBhbGxvY2F0aW9uIGlzIDEwMCUuIEF0ICQxMCwwMDAgb2Ygb3JkaW5hcnkgaW5jb21lLCAkMSwwMDAgcmVtYWlucyB1bmFsbG9jYXRlZC4iLAogICAgICAicXVlc3Rpb24iOiAiV2hpY2ggb3duZXJzaGlwIHJlY29yZCBvciBhbGxvY2F0aW9uIGVudHJ5IHJlc29sdmVzIHRoZSBtaXNzaW5nIDEwIHBlcmNlbnRhZ2UgcG9pbnRzPyIsCiAgICAgICJzdGF0dXMiOiAiUkVWSUVXX1JFUVVJUkVEIgogICAgfQogIF0KfQ=="};
+const types={xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',pdf:'application/pdf',json:'application/json'};
+const urls={};
+for(const [type,encoded] of Object.entries(payload)){
+ const bytes=Uint8Array.from(atob(encoded),c=>c.charCodeAt(0));
+ urls[type]=URL.createObjectURL(new Blob([bytes],{type:types[type]}));
+ if(type!=='xlsx')document.getElementById(type).href=urls[type];
+}
+function showLedger(){
+ const gap=125000-Number(document.querySelector('input[name="closing"]:checked').value);
+ const pass=Math.abs(gap)<=1;
+ const status=document.getElementById('status'),download=document.getElementById('xlsx');
+ status.textContent=pass?'PASS':'FAIL';status.classList.toggle('fail',!pass);
+ document.getElementById('variance').textContent='Variance '+(gap<0?'−':'')+'$'+(Math.abs(gap)/100).toFixed(2)+' · Tolerance $0.01';
+ download.hidden=!pass;
+ if(pass)download.href=urls.xlsx;else download.removeAttribute('href');
+}
+document.querySelector('fieldset').addEventListener('change',showLedger);
+window.addEventListener('pageshow',showLedger);showLedger();
+</script></body></html>
