@@ -18,8 +18,14 @@ def layout(page):
       const rs=[...parent.children].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect());
       return rs.every((a,i)=>rs.slice(i+1).every(b=>Math.min(a.right,b.right)-Math.max(a.left,b.left)<1 || Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)<1))
     })""")
+def activate(locator):
+    if locator.page.viewport_size["width"] == 390:
+        locator.tap()
+    else:
+        locator.click()
+
 def download(page,kind):
-    with page.expect_download() as info:page.locator('#'+kind).click()
+    with page.expect_download() as info:activate(page.locator('#'+kind))
     d=info.value
     assert d.failure() is None and d.suggested_filename.endswith('.'+kind)
     data=d.path().read_bytes()
@@ -44,13 +50,13 @@ def run(browser,engine,width,height):
     res=p.goto(base,wait_until='networkidle');assert res and res.status==200
     assert p.evaluate("getComputedStyle(document.querySelector('input')).fontSize")=='16px'
     layout(p);assert p.locator('#status').inner_text()=='PASS';download(p,'xlsx')
-    p.locator('input[value="125100"]').check();assert p.locator('#status').inner_text()=='FAIL'
+    activate(p.locator('label').filter(has_text='$1,251.00'));assert p.locator('#status').inner_text()=='FAIL'
     assert '−$1.00' in p.locator('#variance').inner_text()
     assert p.locator('#xlsx').is_hidden() and p.locator('#xlsx').get_attribute('href') is None
-    p.locator('input[value="125000"]').check();download(p,'xlsx')
+    activate(p.locator('label').filter(has_text='$1,250.00'));download(p,'xlsx')
     assert p.locator('details').count()==7
     for i,d in enumerate(p.locator('details').all()):
-        d.locator('summary').click();assert d.get_attribute('open') is not None
+        activate(d.locator('summary'));assert d.get_attribute('open') is not None
         if i<3:
             assert d.locator('.flag').inner_text()=='REVIEW_REQUIRED' and '?' in d.locator('.inside').inner_text()
         else:
@@ -58,7 +64,7 @@ def run(browser,engine,width,height):
             for card in d.locator('article').all():
                 assert card.locator('pre').count()==2
                 for pre in card.locator('pre').all():assert pre.is_visible() and json.loads(pre.inner_text())
-        layout(p);d.locator('summary').click();assert d.get_attribute('open') is None
+        layout(p);activate(d.locator('summary'));assert d.get_attribute('open') is None
     download(p,'json');download(p,'pdf')
     assert not re.search(r'\bundefined\b',p.locator('body').inner_text())
     assert p.locator('a').count()==5 and p.locator('button').count()==0
@@ -74,7 +80,7 @@ def run(browser,engine,width,height):
         target=urljoin(base,href)
         if loc=='#contact':
             p.route('https://github.com/**',lambda route:route.fulfill(status=200,body='GitHub walkthrough request'))
-        link.click()
+        activate(link)
         assert p.url==target,(p.url,target)
         if loc=='footer a':assert p.locator('#ecosystem').is_visible()
         p.goto(base,wait_until='networkidle')
