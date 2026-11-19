@@ -9,14 +9,11 @@ permissions:
 jobs:
   browser:
     runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright/python:v1.55.0-noble
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: python -m pip install playwright openpyxl pdfplumber
-      - run: python -m playwright install --with-deps chromium webkit
+      - run: python -m pip install playwright==1.55.0 openpyxl pdfplumber
       - name: Exercise homepage from repository checkout
         env:
           HOME_NETWORK_CHECKS: '1'
