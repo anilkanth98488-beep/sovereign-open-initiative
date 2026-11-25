@@ -58,7 +58,7 @@ def run(browser,engine,width,height):
     assert p.locator('pre:visible').count()==0
     assert p.locator('footer a').get_attribute('href').startswith('./')
     for i,d in enumerate(p.locator('details.case,details.directory').all()):
-        activate(d.locator('summary'));assert d.get_attribute('open') is not None
+        activate(d.locator(':scope > summary'));assert d.get_attribute('open') is not None
         if i<3:
             assert d.locator('.flag').inner_text()=='REVIEW_REQUIRED' and '?' in d.locator('.inside').inner_text()
         else:
@@ -73,7 +73,7 @@ def run(browser,engine,width,height):
                 layout(p)
                 activate(trace)
                 assert card.locator('pre:visible').count()==0
-        layout(p);activate(d.locator('summary'));assert d.get_attribute('open') is None
+        layout(p);activate(d.locator(':scope > summary'));assert d.get_attribute('open') is None
     download(p,'json');download(p,'pdf')
     assert not re.search(r'\bundefined\b',p.locator('body').inner_text())
     assert p.locator('a').count()==5 and p.locator('button').count()==0
