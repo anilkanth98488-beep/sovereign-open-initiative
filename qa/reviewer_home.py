@@ -54,17 +54,26 @@ def run(browser,engine,width,height):
     assert '−$1.00' in p.locator('#variance').inner_text()
     assert p.locator('#xlsx').is_hidden() and p.locator('#xlsx').get_attribute('href') is None
     activate(p.locator('label').filter(has_text='$1,250.00'));download(p,'xlsx')
-    assert p.locator('details').count()==7
-    for i,d in enumerate(p.locator('details').all()):
-        activate(d.locator('summary'));assert d.get_attribute('open') is not None
+    assert p.locator('details.trace').count()==7
+    assert p.locator('pre:visible').count()==0
+    assert p.locator('footer a').get_attribute('href').startswith('./')
+    for i,d in enumerate(p.locator('details.case,details.directory').all()):
+        activate(d.locator(':scope > summary'));assert d.get_attribute('open') is not None
         if i<3:
             assert d.locator('.flag').inner_text()=='REVIEW_REQUIRED' and '?' in d.locator('.inside').inner_text()
         else:
             expected=[1,3,1,2][i-3];assert d.locator('article').count()==expected
             for card in d.locator('article').all():
                 assert card.locator('pre').count()==2
+                trace = card.locator('.trace summary')
+                assert card.locator('.facts').is_visible()
+                assert card.locator('pre:visible').count()==0
+                activate(trace)
                 for pre in card.locator('pre').all():assert pre.is_visible() and json.loads(pre.inner_text())
-        layout(p);activate(d.locator('summary'));assert d.get_attribute('open') is None
+                layout(p)
+                activate(trace)
+                assert card.locator('pre:visible').count()==0
+        layout(p);activate(d.locator(':scope > summary'));assert d.get_attribute('open') is None
     download(p,'json');download(p,'pdf')
     assert not re.search(r'\bundefined\b',p.locator('body').inner_text())
     assert p.locator('a').count()==5 and p.locator('button').count()==0
