@@ -1,7 +1,6 @@
 name: Reviewer homepage
 on:
-  pull_request:
-    branches: [taxflow-demo-pages]
+  pull_request: {}
   push:
     branches: [taxflow-demo-pages]
 permissions:
@@ -18,8 +17,11 @@ jobs:
         env:
           HOME_NETWORK_CHECKS: '1'
         run: |
-          python -m http.server 8088 --bind 127.0.0.1 >/tmp/homepage-server.log 2>&1 &
-          curl --retry 5 --retry-connrefused -fsS http://127.0.0.1:8088/docs/index.html -o /dev/null
+          mkdir -p /tmp/pages/sovereign-open-initiative
+          ln -s "$PWD/docs" /tmp/pages/sovereign-open-initiative/docs
+          export HOME_TEST_URL=http://127.0.0.1:8088/sovereign-open-initiative/docs/index.html
+          python -m http.server 8088 --directory /tmp/pages --bind 127.0.0.1 >/tmp/homepage-server.log 2>&1 &
+          curl --retry 5 --retry-connrefused -fsS "$HOME_TEST_URL" -o /dev/null
           python qa/reviewer_home.py
       - name: Verify deployed bytes and exercise public URL
         if: github.event_name == 'push'
